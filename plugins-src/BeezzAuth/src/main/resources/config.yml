@@ -1,4 +1,4 @@
-# BeezzAuth — вход на сервер без паролей: аккаунт привязывается к ВК / Telegram,
+# BeezzAuth — вход на сервер без паролей: аккаунт привязывается к ВК / Telegram / Discord,
 # а вход с нового устройства подтверждается кнопкой в боте.
 
 # Сколько часов после входа можно заходить с того же IP без подтверждения.
@@ -27,3 +27,12 @@ vk:
   # как сообщество найти игрокам
   link: "vk.me/beezzland"
   api-base: "https://api.vk.com/method"
+
+discord:
+  enabled: false
+  # токен бота (Discord Developer Portal → Bot → Reset Token). Бот должен быть добавлен на наш Discord-сервер:
+  # писать игрокам в личку он может, только если у них есть общий сервер.
+  token: ""
+  # куда звать игроков (приглашение на наш Discord)
+  link: "discord.gg/beezzland"
+  api-base: "https://discord.com/api/v10"

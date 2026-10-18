@@ -20,6 +20,7 @@ public final class AuthConfig {
     public final Duration lateApprove;
     public final Section telegram;
     public final Section vk;
+    public final Section discord;
 
     public record Section(boolean enabled, String token, String username, String link, long groupId, String apiBase) {
     }
@@ -31,6 +32,7 @@ public final class AuthConfig {
         lateApprove = Duration.ofMinutes(num(m, "late-approve-minutes", 5));
         telegram = section(m, "telegram", "https://api.telegram.org");
         vk = section(m, "vk", "https://api.vk.com/method");
+        discord = section(m, "discord", "https://discord.com/api/v10");
     }
 
     public static AuthConfig load(Path dir) throws IOException {

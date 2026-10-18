@@ -10,6 +10,7 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import land.beezz.auth.provider.DiscordBot;
 import land.beezz.auth.provider.Provider;
 import land.beezz.auth.provider.TelegramBot;
 import land.beezz.auth.provider.VkBot;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import java.nio.file.Path;
 
 @Plugin(id = "beezzauth", name = "BeezzAuth", version = "1.0.0",
-        description = "Вход без паролей: привязка к ВК / Telegram и подтверждение входа кнопкой",
+        description = "Вход без паролей: привязка к ВК / Telegram / Discord и подтверждение входа кнопкой",
         authors = {"BeezzLand"})
 public final class BeezzAuth {
 
@@ -42,6 +43,7 @@ public final class BeezzAuth {
         auth = new AuthService(cfg, accounts, log);
         if (cfg.telegram.enabled()) auth.addProvider(new TelegramBot(cfg.telegram, log));
         if (cfg.vk.enabled()) auth.addProvider(new VkBot(cfg.vk, log));
+        if (cfg.discord.enabled()) auth.addProvider(new DiscordBot(cfg.discord, log));
         for (Provider p : auth.providers()) {
             p.start(auth);
             log.info("{} bot started ({})", p.title(), p.where());

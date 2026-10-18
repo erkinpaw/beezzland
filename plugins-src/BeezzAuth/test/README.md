@@ -14,6 +14,9 @@ real bot token is needed and the main proxy (25565) is not touched.
 5. VK: `python fake_vk.py` (127.0.0.1:8098), enable `vk` in the test config with
    `api-base: "http://127.0.0.1:8098/method"`, then `node vktest.js` — link by a VK message,
    then a login from 127.0.0.2 (a «new IP» without touching the network) confirmed by a VK callback button.
+6. Discord: `python fake_discord.py` (REST + gateway WebSocket on 127.0.0.1:8097), enable `discord` with
+   `api-base: "http://127.0.0.1:8097/api"`, then `node discordtest.js` — DM link, server-channel messages
+   ignored, button confirmation from a new IP.
 
 Uses mineflayer from `../../../loadtest/node_modules` (`npm install` there first).
-Last run 18.10.2026: Telegram 11/11 PASS, VK 9/9 PASS.
+Last run 18.10.2026: Telegram 11/11 PASS, VK 9/9 PASS, Discord 9/9 PASS.
