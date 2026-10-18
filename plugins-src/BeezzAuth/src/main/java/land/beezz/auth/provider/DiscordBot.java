@@ -1,6 +1,7 @@
 package land.beezz.auth.provider;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import land.beezz.auth.AuthConfig;
@@ -22,7 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Discord bot: receives DMs and button presses over the Gateway (WebSocket), answers over REST.
- * Players DM the bot their code; it must share a server with them (our Discord) to DM them back.
+ * Players link either in the registration channel (button -> window for the code, answer only they see)
+ * or by DMing the bot their code; it must share a server with them (our Discord) to DM them back.
  * Only the DIRECT_MESSAGES intent is used — DM text does not need the privileged content intent.
  */
 public final class DiscordBot implements Provider {
@@ -39,6 +41,9 @@ public final class DiscordBot implements Provider {
     private volatile Long seq;
     private ScheduledFuture<?> heartbeat;
     private Inbox inbox;
+    private volatile String botId;
+
+    static final String LINK_BUTTON = "bz:link", LINK_FORM = "bz:code";
 
     public DiscordBot(AuthConfig.Section cfg, Logger log) {
         this.cfg = cfg;
@@ -47,7 +52,9 @@ public final class DiscordBot implements Provider {
 
     @Override public String id() { return "discord"; }
     @Override public String title() { return "Discord"; }
-    @Override public String where() { return cfg.link(); }
+    @Override public String where() {
+        return cfg.channel().isEmpty() ? cfg.link() : cfg.link() + " → #" + cfg.channel();
+    }
 
     @Override
     public void start(Inbox inbox) {
@@ -158,6 +165,8 @@ public final class DiscordBot implements Provider {
     private void dispatch(String type, JsonObject d) throws Exception {
         if (type.equals("READY")) {
             log.info("Discord bot connected as {}", d.getAsJsonObject("user").get("username").getAsString());
+            botId = d.getAsJsonObject("user").get("id").getAsString();
+            if (!cfg.channel().isEmpty()) Thread.ofVirtual().name("BeezzAuth-discord-panel").start(this::ensurePanel);
         } else if (type.equals("MESSAGE_CREATE")) {
             JsonObject author = d.getAsJsonObject("author");
             if (d.has("guild_id") || (author.has("bot") && author.get("bot").getAsBoolean())) {
@@ -165,10 +174,29 @@ public final class DiscordBot implements Provider {
             }
             String reply = inbox.onText(this, author.get("id").getAsString(), d.get("content").getAsString());
             if (reply != null) post(d.get("channel_id").getAsString(), reply, null);
-        } else if (type.equals("INTERACTION_CREATE") && d.get("type").getAsInt() == 3) {
+        } else if (type.equals("INTERACTION_CREATE")) {
+            int kind = d.get("type").getAsInt();
             JsonObject user = d.has("user") ? d.getAsJsonObject("user") : d.getAsJsonObject("member").getAsJsonObject("user");
             String custom = d.getAsJsonObject("data").get("custom_id").getAsString();
-            if (custom.length() < 4 || custom.charAt(2) != ':') return;
+            if (kind == 3 && custom.equals(LINK_BUTTON)) {
+                callback(d, codeForm());
+                return;
+            }
+            if (kind == 5 && custom.equals(LINK_FORM)) {
+                String code = d.getAsJsonObject("data").getAsJsonArray("components").get(0).getAsJsonObject()
+                        .getAsJsonArray("components").get(0).getAsJsonObject().get("value").getAsString();
+                String reply = inbox.onText(this, user.get("id").getAsString(), code);
+                JsonObject data = new JsonObject();
+                data.addProperty("content", reply);
+                data.addProperty("flags", 64); // ephemeral: only this player sees the answer
+                JsonObject body = new JsonObject();
+                body.addProperty("type", 4);
+                body.add("data", data);
+                callback(d, body);
+                return;
+            }
+            // other buttons of the same bot (the moderation bot's tickets) are not ours
+            if (kind != 3 || !(custom.startsWith("ok:") || custom.startsWith("no:"))) return;
             String result = inbox.onDecision(this, user.get("id").getAsString(), custom.substring(3), custom.startsWith("ok"));
             // 7 = update the message the button was on: replace text, drop the buttons
             JsonObject data = new JsonObject();
@@ -177,8 +205,87 @@ public final class DiscordBot implements Provider {
             JsonObject body = new JsonObject();
             body.addProperty("type", 7);
             body.add("data", data);
-            rest("POST", "/interactions/" + d.get("id").getAsString() + "/" + d.get("token").getAsString() + "/callback", body);
+            callback(d, body);
         }
+    }
+
+    private void callback(JsonObject interaction, JsonObject body) throws Exception {
+        rest("POST", "/interactions/" + interaction.get("id").getAsString() + "/"
+                + interaction.get("token").getAsString() + "/callback", body);
+    }
+
+    /** 9 = open a modal window with one field for the 6-digit code. */
+    private static JsonObject codeForm() {
+        JsonObject input = new JsonObject();
+        input.addProperty("type", 4);
+        input.addProperty("custom_id", "code");
+        input.addProperty("label", "Код с экрана игры");
+        input.addProperty("style", 1);
+        input.addProperty("min_length", 6);
+        input.addProperty("max_length", 6);
+        input.addProperty("placeholder", "123456");
+        input.addProperty("required", true);
+        JsonObject data = new JsonObject();
+        data.addProperty("custom_id", LINK_FORM);
+        data.addProperty("title", "Привязка к BeezzLand");
+        data.add("components", row(input));
+        JsonObject body = new JsonObject();
+        body.addProperty("type", 9);
+        body.add("data", data);
+        return body;
+    }
+
+    private static JsonArray row(JsonObject... items) {
+        JsonArray components = new JsonArray();
+        for (JsonObject i : items) components.add(i);
+        JsonObject row = new JsonObject();
+        row.addProperty("type", 1);
+        row.add("components", components);
+        JsonArray rows = new JsonArray();
+        rows.add(row);
+        return rows;
+    }
+
+    /** Finds the registration channel on our servers and posts the button there once (kept across restarts). */
+    private void ensurePanel() {
+        try {
+            for (JsonElement g : restArray("/users/@me/guilds")) {
+                for (JsonElement c : restArray("/guilds/" + g.getAsJsonObject().get("id").getAsString() + "/channels")) {
+                    JsonObject ch = c.getAsJsonObject();
+                    if (ch.get("type").getAsInt() != 0 || !cfg.channel().equalsIgnoreCase(ch.get("name").getAsString())) continue;
+                    String id = ch.get("id").getAsString();
+                    for (JsonElement m : restArray("/channels/" + id + "/messages?limit=50")) {
+                        JsonObject msg = m.getAsJsonObject();
+                        if (botId.equals(msg.getAsJsonObject("author").get("id").getAsString())
+                                && msg.toString().contains("\"" + LINK_BUTTON + "\"")) {
+                            return; // already there
+                        }
+                    }
+                    post(id, "🐝 **Регистрация на BeezzLand**\n\n"
+                            + "1. Зайди на сервер — на экране появится 6-значный код.\n"
+                            + "2. Нажми кнопку ниже и введи этот код.\n"
+                            + "3. Зайди на сервер снова — и играй. Паролей не нужно.\n\n"
+                            + "Если зайдут с другого устройства, бот спросит в личке, ты ли это — "
+                            + "не закрывай личные сообщения от участников сервера.",
+                            row(button(1, "Привязать аккаунт", LINK_BUTTON)));
+                    log.info("Discord: registration button posted in #{}", cfg.channel());
+                    return;
+                }
+            }
+            log.warn("Discord: channel #{} not found — create it or clear discord.channel in config.yml", cfg.channel());
+        } catch (Exception e) {
+            log.warn("Discord: cannot set up #{}: {}", cfg.channel(), e.toString());
+        }
+    }
+
+    private JsonArray restArray(String path) throws Exception {
+        HttpResponse<String> r = HTTP.send(HttpRequest.newBuilder(URI.create(cfg.apiBase() + path))
+                        .timeout(Duration.ofSeconds(15))
+                        .header("Authorization", "Bot " + cfg.token())
+                        .header("User-Agent", "DiscordBot (https://beezzland.ru, 1.0)").GET().build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (r.statusCode() >= 300) throw new IllegalStateException("Discord GET " + path + ": HTTP " + r.statusCode());
+        return JsonParser.parseString(r.body()).getAsJsonArray();
     }
 
     // ------------------------------------------------------------------ sending

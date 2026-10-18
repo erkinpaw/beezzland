@@ -24,7 +24,7 @@ public final class AuthConfig {
     public final Section vk;
     public final Section discord;
 
-    public record Section(boolean enabled, String token, String username, String link, long groupId, String apiBase) {
+    public record Section(boolean enabled, String token, String username, String link, long groupId, String apiBase, String channel) {
     }
 
     private AuthConfig(Map<String, Object> m) {
@@ -56,7 +56,8 @@ public final class AuthConfig {
     private static Section section(Map<String, Object> m, String key, String defaultApi) {
         Map<String, Object> s = (Map<String, Object>) m.getOrDefault(key, Map.of());
         return new Section(Boolean.TRUE.equals(s.get("enabled")), str(s, "token"), str(s, "username"),
-                str(s, "link"), num(s, "group-id", 0), s.get("api-base") == null ? defaultApi : str(s, "api-base"));
+                str(s, "link"), num(s, "group-id", 0), s.get("api-base") == null ? defaultApi : str(s, "api-base"),
+                str(s, "channel"));
     }
 
     private static String str(Map<String, Object> m, String key) {
