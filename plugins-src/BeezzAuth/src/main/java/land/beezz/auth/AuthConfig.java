@@ -20,6 +20,9 @@ public final class AuthConfig {
     public final Duration lateApprove;
     /** Bedrock players via Floodgate are already authenticated by Xbox Live: let them in without linking */
     public final boolean trustFloodgate;
+    /** true: new players are not kicked with a code; BeezzGate on the game server shows the code in a window. */
+    public final boolean gate;
+    public final int apiPort;
     public final Section telegram;
     public final Section vk;
     public final Section discord;
@@ -33,6 +36,8 @@ public final class AuthConfig {
         linkCodeLife = Duration.ofMinutes(num(m, "link-code-minutes", 10));
         lateApprove = Duration.ofMinutes(num(m, "late-approve-minutes", 5));
         trustFloodgate = !Boolean.FALSE.equals(m.get("trust-floodgate"));
+        gate = Boolean.TRUE.equals(m.get("gate"));
+        apiPort = (int) num(m, "api-port", 8766);
         telegram = section(m, "telegram", "https://api.telegram.org");
         vk = section(m, "vk", "https://api.vk.com/method");
         discord = section(m, "discord", "https://discord.com/api/v10");

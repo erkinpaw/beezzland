@@ -29,6 +29,7 @@ public final class VkBot implements Provider {
     @Override public String id() { return "vk"; }
     @Override public String title() { return "ВКонтакте"; }
     @Override public String where() { return cfg.link(); }
+    @Override public String url(String code) { return cfg.link().startsWith("http") ? cfg.link() : "https://" + cfg.link(); }
 
     @Override
     public void start(Inbox inbox) {

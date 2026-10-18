@@ -77,6 +77,9 @@ public final class AuthService implements Provider.Inbox {
         long now = System.currentTimeMillis();
         Accounts.Account acc = accounts.get(name);
         if (acc == null || acc.links.isEmpty()) {
+            if (cfg.gate) {
+                return Verdict.ALLOW; // BeezzGate holds them on the loading screen with the code in a window
+            }
             return new Verdict(linkScreen(newCode(name, ip)));
         }
         if (ip.equals(acc.lastIp) && now < acc.sessionUntil
@@ -159,6 +162,29 @@ public final class AuthService implements Provider.Inbox {
         } while (codes.containsKey(code));
         codes.put(code, new PendingLink(name, ip, now + cfg.linkCodeLife.toMillis()));
         return code;
+    }
+
+    /** For BeezzGate: is the nick linked, and if not, its code and where to send it. */
+    public com.google.gson.JsonObject linkStatus(String name, String ip) {
+        com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+        Accounts.Account acc = accounts.get(name);
+        boolean linked = acc != null && !acc.links.isEmpty();
+        o.addProperty("linked", linked);
+        if (linked) return o;
+        String code = newCode(name, ip);
+        o.addProperty("code", code);
+        o.addProperty("minutes", cfg.linkCodeLife.toMinutes());
+        com.google.gson.JsonArray bots = new com.google.gson.JsonArray();
+        for (Provider p : providers.values()) {
+            com.google.gson.JsonObject b = new com.google.gson.JsonObject();
+            b.addProperty("id", p.id());
+            b.addProperty("title", p.title());
+            b.addProperty("where", p.where());
+            b.addProperty("url", p.url(code));
+            bots.add(b);
+        }
+        o.add("bots", bots);
+        return o;
     }
 
     // ------------------------------------------------------------------ bots

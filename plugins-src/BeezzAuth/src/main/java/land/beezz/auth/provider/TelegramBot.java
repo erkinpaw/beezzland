@@ -24,6 +24,8 @@ public final class TelegramBot implements Provider {
     @Override public String id() { return "telegram"; }
     @Override public String title() { return "Telegram"; }
     @Override public String where() { return "@" + cfg.username(); }
+    // t.me/<bot>?start=<code>: Telegram sends «/start <code>» by itself, the player only presses «Start»
+    @Override public String url(String code) { return "https://t.me/" + cfg.username() + "?start=" + code; }
 
     private String api(String method) {
         return cfg.apiBase() + "/bot" + cfg.token() + "/" + method;

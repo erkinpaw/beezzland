@@ -30,6 +30,7 @@ public final class BeezzAuth {
     private final Path dir;
     private AuthService auth;
     private AuthConfig cfg;
+    private LinkApi api;
 
     @Inject
     public BeezzAuth(ProxyServer proxy, Logger log, @DataDirectory Path dir) {
@@ -57,6 +58,10 @@ public final class BeezzAuth {
         log.info("Floodgate {}", Floodgate.present()
                 ? (cfg.trustFloodgate ? "found: Bedrock players skip linking" : "found, but trust-floodgate is off")
                 : "not installed: only Java players");
+        if (cfg.gate) {
+            api = new LinkApi(auth, dir, cfg.apiPort, log);
+            log.info("Gate mode: new players get their code from BeezzGate (API on 127.0.0.1:{})", cfg.apiPort);
+        }
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("bauth").plugin(this).build(),
                 new AuthCommand(auth, accounts));
@@ -64,6 +69,7 @@ public final class BeezzAuth {
 
     @Subscribe
     public void onShutdown(ProxyShutdownEvent e) {
+        if (api != null) api.stop();
         if (auth != null) {
             for (Provider p : auth.providers()) p.stop();
         }

@@ -52,6 +52,9 @@ public final class DiscordBot implements Provider {
 
     @Override public String id() { return "discord"; }
     @Override public String title() { return "Discord"; }
+    // the invite should be made on #регистрация: then it opens right there
+    @Override public String url(String code) { return cfg.link().startsWith("http") ? cfg.link() : "https://" + cfg.link(); }
+
     @Override public String where() {
         return cfg.channel().isEmpty() ? cfg.link() : cfg.link() + " → #" + cfg.channel();
     }
