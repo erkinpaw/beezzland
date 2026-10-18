@@ -110,6 +110,8 @@ def main():
     print("Channels")
     chans = {(c["name"], c.get("parent_id")): c for c in d.call("GET", f"/guilds/{g}/channels")} if not a.dry_run or token else {}
     everyone = g  # the @everyone role id equals the guild id
+    # the bot itself must be able to post in read-only channels (the registration button lives there)
+    bot_id = d.call("GET", "/users/@me")["id"] if token else "dry-bot"
 
     def ensure(name, body):
         key = (name, body.get("parent_id"))
@@ -132,7 +134,7 @@ def main():
                 body["topic"] = ch["topic"]
             if ch.get("readonly"):
                 body["permission_overwrites"] = [{"id": everyone, "type": 0, "deny": str(SEND), "allow": "0"}] + \
-                    [{"id": s, "type": 0, "allow": str(SEND), "deny": "0"} for s in staff_ids]
+                    [{"id": s, "type": 0, "allow": str(SEND), "deny": "0"} for s in staff_ids] +                     [{"id": bot_id, "type": 1, "allow": str(SEND), "deny": "0"}]
             elif overwrites:
                 # channels created over the API don't always inherit the category's permissions: copy them
                 body["permission_overwrites"] = overwrites
