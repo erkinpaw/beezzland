@@ -13,11 +13,12 @@ rcon() { python3 "$BASE/scripts/rcon.py" "$@" >/dev/null 2>&1 || true; }
 # Database (consistent snapshot without locking tables)
 mariadb-dump --single-transaction --quick "$DB" | zstd -q -o "$DEST/db_$STAMP.sql.zst"
 
-# Worlds: pause autosave so files are not written mid-copy
+# Worlds (in 26.x every dimension, incl. farm/farm_nether, is inside survival/world):
+# pause autosave so files are not written mid-copy
 rcon "save-off" "save-all flush"
 sleep 5
 tar --zstd -cf "$DEST/files_$STAMP.tar.zst" -C "$BASE" \
-    survival/world survival/world_nether survival/world_the_end \
+    survival/world \
     survival/plugins proxy/plugins proxy/velocity.toml \
     survival/server.properties survival/config survival/purpur.yml \
     --warning=no-file-changed --ignore-failed-read
