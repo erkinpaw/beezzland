@@ -1,6 +1,6 @@
 {
   "roles": [
-    {"name": "Владелец", "color": "#FACC15", "hoist": true, "staff": true, "admin": true},
+    {"name": "Владелец", "color": "#FACC15", "hoist": true, "staff": true},
     {"name": "Админ", "color": "#F87171", "hoist": true, "staff": true},
     {"name": "Модер", "color": "#60A5FA", "hoist": true, "staff": true},
     {"name": "Хелпер", "color": "#34D399", "hoist": true, "staff": true},

@@ -13,7 +13,6 @@ import argparse, json, os, sys, time, urllib.error, urllib.request
 
 API = os.environ.get("DISCORD_API", "https://discord.com/api/v10")
 VIEW, SEND, CONNECT = 1 << 10, 1 << 11, 1 << 20
-ADMINISTRATOR = 1 << 3
 TEXT, VOICE, CATEGORY = 0, 2, 4
 
 
@@ -67,8 +66,8 @@ def main():
         else:
             body = {"name": r["name"], "color": int(r["color"].lstrip("#"), 16), "hoist": r.get("hoist", False),
                     "mentionable": False}
-            if r.get("admin"):
-                body["permissions"] = str(ADMINISTRATOR)
+            # no permissions on created roles: Discord refuses (403) to let a bot grant rights it doesn't have,
+            # and the server owner has every right anyway; give mods their rights in Discord's role settings
             role = d.call("POST", f"/guilds/{g}/roles", body)
             print(f"  + {r['name']}")
         if r.get("staff"):
