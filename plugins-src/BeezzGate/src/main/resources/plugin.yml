@@ -1,0 +1,5 @@
+name: BeezzGate
+version: '${version}'
+main: land.beezz.gate.BeezzGate
+api-version: '26.3'
+description: BeezzLand — окна регистрации и тест по правилам до входа в мир
