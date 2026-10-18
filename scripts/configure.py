@@ -209,6 +209,15 @@ def main():
         # (the service's -XX:+DisableExplicitGC also blocks it; this covers runs without Aikar's flags)
         t = yaml_set(t, ["settings", "performance", "gc", "when-running"], "false")
         t = yaml_set(t, ["settings", "performance", "gc", "when-finished"], "false")
+        # Russian world names; the main world first (otherwise "farm" sorts before "world" and opens by default)
+        for world, name, order in (("world", "Основной мир", 0), ("world_nether", "Незер", 1), ("world_the_end", "Энд", 2)):
+            t = yaml_set(t, ["world-settings", world, "ui", "display-name"], q(name))
+            t = yaml_set(t, ["world-settings", world, "ui", "order"], str(order))
+        if "\n  farm:\n" not in t:  # world-settings is the last block of the file
+            t = t.rstrip("\n") + "\n" + "".join(
+                f"  {world}:\n" + (f"    render:\n      renderers:\n        basic: nether_basic\n      skylight: 0\n" if nether else "")
+                + f"    ui:\n      display-name: '{name}'\n      order: {order}\n"
+                for world, name, order, nether in (("farm", "Мир ферм", 3, False), ("farm_nether", "Незер мира ферм", 4, True)))
         write(p, t)
     print("configs patched")
 
