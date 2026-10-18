@@ -15,6 +15,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -33,12 +34,14 @@ final class Quiz {
             .uses(1).lifetime(Duration.ofMinutes(30)).build();
 
     final int version;
+    private final int ask;
     private final String rules;
     private final List<Question> questions = new ArrayList<>();
 
     Quiz(File file) {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(file);
         version = y.getInt("version", 1);
+        ask = y.getInt("ask", 0);
         rules = y.getString("rules", "").trim();
         for (Map<?, ?> q : y.getMapList("questions")) {
             questions.add(new Question(String.valueOf(q.get("text")), "да".equalsIgnoreCase(String.valueOf(q.get("answer")))));
@@ -52,29 +55,29 @@ final class Quiz {
         return done;
     }
 
-    private void ask(Audience who, int i, CompletableFuture<Boolean> done) {
-        if (i >= questions.size()) {
+    private void ask(Audience who, List<Question> qs, int i, CompletableFuture<Boolean> done) {
+        if (i >= qs.size()) {
             who.closeDialog();
             done.complete(true);
             return;
         }
-        Question q = questions.get(i);
-        Component body = MM.deserialize("<gray>Вопрос " + (i + 1) + " из " + questions.size() + "</gray>\n\n<white>" + q.text());
+        Question q = qs.get(i);
+        Component body = MM.deserialize("<gray>Вопрос " + (i + 1) + " из " + qs.size() + "</gray>\n\n<white>" + q.text());
         Dialog d = Dialog.create(b -> b.empty()
                 .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Правила BeezzLand</bold>"))
                         .canCloseWithEscape(false)
                         .body(List.of(DialogBody.plainMessage(body, 300)))
                         .build())
                 .type(DialogType.confirmation(
-                        button("<#34D399>Да", q.yes(), who, i, done),
-                        button("<#F87171>Нет", !q.yes(), who, i, done))));
+                        button("<#34D399>Да", q.yes(), who, qs, i, done),
+                        button("<#F87171>Нет", !q.yes(), who, qs, i, done))));
         who.showDialog(d);
     }
 
-    private ActionButton button(String label, boolean right, Audience who, int i, CompletableFuture<Boolean> done) {
+    private ActionButton button(String label, boolean right, Audience who, List<Question> qs, int i, CompletableFuture<Boolean> done) {
         return ActionButton.builder(MM.deserialize(label)).width(120)
                 .action(DialogAction.customClick((view, aud) -> {
-                    if (right) ask(who, i + 1, done);
+                    if (right) ask(who, qs, i + 1, done);
                     else showRules(who, done, true);
                 }, ONCE))
                 .build();
@@ -85,7 +88,7 @@ final class Quiz {
         String head = afterMistake
                 ? "<#F87171>Ответ неверный.</#F87171> <gray>Прочитай правила ещё раз и пройди тест заново.</gray>"
                 : "<gray>Добро пожаловать! Прочитай правила — после них будет короткий тест из "
-                  + questions.size() + " вопросов.</gray>";
+                  + count() + " вопросов.</gray>";
         String button = afterMistake ? "<#FACC15>Прочитал, пройти тест заново" : "<#FACC15>Прочитал, начать тест";
         Component body = MM.deserialize(head + "\n\n<white>" + rules.replace("\n", "\n\n"));
         Dialog d = Dialog.create(b -> b.empty()
@@ -94,7 +97,18 @@ final class Quiz {
                         .body(List.of(DialogBody.plainMessage(body, 300)))
                         .build())
                 .type(DialogType.notice(ActionButton.builder(MM.deserialize(button)).width(240)
-                        .action(DialogAction.customClick((view, aud) -> ask(who, 0, done), ONCE)).build())));
+                        .action(DialogAction.customClick((view, aud) -> ask(who, pick(), 0, done), ONCE)).build())));
         who.showDialog(d);
+    }
+
+    private int count() {
+        return ask > 0 ? Math.min(ask, questions.size()) : questions.size();
+    }
+
+    /** A fresh random set of questions in random order for every attempt, so answers can't be memorised by position. */
+    private List<Question> pick() {
+        List<Question> all = new ArrayList<>(questions);
+        Collections.shuffle(all);
+        return all.subList(0, count());
     }
 }
