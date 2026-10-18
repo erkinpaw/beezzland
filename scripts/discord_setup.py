@@ -5,7 +5,8 @@ Usage:
 
 - Safe to re-run: roles and channels that already exist (same name) are left alone.
 - Read-only channels: @everyone can read but not write; staff roles can write.
-- staff_only categories are hidden from everyone except staff roles.
+- staff_only categories are hidden from everyone except staff roles (and the bot: Discord lists only channels
+  the bot can see, so a hidden channel would look missing and be created again on a re-run).
 - The bot needs "Manage Roles" and "Manage Channels" on the server; its own role must be
   above the roles it creates. The token is read from the environment, never from arguments.
 """
@@ -126,7 +127,7 @@ def main():
         overwrites = []
         if cat.get("staff_only"):
             overwrites = [{"id": everyone, "type": 0, "deny": str(VIEW), "allow": "0"}] + \
-                         [{"id": s, "type": 0, "allow": str(VIEW | SEND | CONNECT), "deny": "0"} for s in staff_ids]
+                         [{"id": s, "type": 0, "allow": str(VIEW | SEND | CONNECT), "deny": "0"} for s in staff_ids] +                          [{"id": bot_id, "type": 1, "allow": str(VIEW | SEND), "deny": "0"}]  # else it can't see them on re-runs
         category = ensure(cat["name"], {"name": cat["name"], "type": CATEGORY, "permission_overwrites": overwrites})
         for ch in cat["channels"]:
             body = {"name": ch["name"], "type": VOICE if ch.get("voice") else TEXT, "parent_id": category["id"]}
