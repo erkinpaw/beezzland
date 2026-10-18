@@ -167,3 +167,9 @@ body.map-page { height: 100vh; display: flex; flex-direction: column; overflow: 
 
 /* calculator page: the plugin page sits on our honeycomb background */
 .calc-frame iframe { background: transparent; color-scheme: dark; }
+
+/* «Как зайти» tabs */
+.tabs { display: inline-flex; gap: 4px; padding: 4px; margin: 0 0 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.tab { font: 700 14px var(--body); color: var(--muted); background: transparent; border: 0; padding: 8px 16px; border-radius: 9px; cursor: pointer; }
+.tab.on { color: #111; background: var(--honey); }
+.steps code { font-family: var(--pixel); font-size: 11px; color: var(--text); }

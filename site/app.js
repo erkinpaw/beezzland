@@ -5,6 +5,18 @@
   $$("[data-ip]").forEach((el) => (el.textContent = cfg.ip || "localhost"));
   $$("[data-year]").forEach((el) => (el.textContent = new Date().getFullYear()));
 
+  // «Как зайти»: Java / Bedrock tabs, only when phones can join
+  const tabs = document.querySelector("[data-join-tabs]");
+  if (tabs && cfg.bedrock) {
+    tabs.hidden = false;
+    tabs.addEventListener("click", (e) => {
+      const key = e.target.dataset && e.target.dataset.tab;
+      if (!key) return;
+      $$("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === key));
+      $$("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== key));
+    });
+  }
+
   const names = { vk: "ВКонтакте", telegram: "Telegram", discord: "Discord", youtube: "YouTube" };
   const socials = document.querySelector("[data-socials]");
   Object.entries(cfg.links || {}).forEach(([k, url]) => {

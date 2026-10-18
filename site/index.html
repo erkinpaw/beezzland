@@ -78,12 +78,26 @@
 
   <section id="join">
     <h2>Как зайти</h2>
-    <p class="sub">Подойдёт любая версия Minecraft от 1.21 до <span data-version>26.3</span>, лицензия не обязательна.</p>
-    <ol class="steps">
-      <li><b>Добавь сервер</b><span>Мультиплеер → Добавить сервер → адрес <code data-ip>localhost</code></span></li>
-      <li><b>Привяжи аккаунт</b><span>При первом входе бот пришлёт код. Отправь его в ВК, Telegram или Discord.</span></li>
-      <li><b>Играй</b><span>В следующий раз заходишь сразу. С нового устройства — подтверждаешь кнопкой.</span></li>
-    </ol>
+    <div class="tabs" data-join-tabs hidden>
+      <button class="tab on" data-tab="java">С компьютера</button>
+      <button class="tab" data-tab="bedrock">С телефона</button>
+    </div>
+    <div data-panel="java">
+      <p class="sub">Подойдёт любая версия Minecraft Java от 1.21 до <span data-version>26.3</span>, лицензия не обязательна.</p>
+      <ol class="steps">
+        <li><b>Добавь сервер</b><span>Мультиплеер → Добавить сервер → адрес <code data-ip>localhost</code></span></li>
+        <li><b>Привяжи аккаунт</b><span>При первом входе сервер покажет 6-значный код — отправь его нашему боту в ВК, Telegram или Discord.</span></li>
+        <li><b>Играй</b><span>В следующий раз заходишь сразу. С нового устройства — подтверждаешь кнопкой в боте.</span></li>
+      </ol>
+    </div>
+    <div data-panel="bedrock" hidden>
+      <p class="sub">Minecraft на телефоне, планшете, консоли или Windows (Bedrock) — играешь вместе с игроками на ПК.</p>
+      <ol class="steps">
+        <li><b>Добавь сервер</b><span>Играть → Серверы → Добавить сервер → адрес <code data-ip>localhost</code>, порт <code>19132</code></span></li>
+        <li><b>Войди в Xbox</b><span>Minecraft сам попросит войти в аккаунт Microsoft — это и есть проверка, ботов привязывать не нужно.</span></li>
+        <li><b>Играй</b><span>Твой ник на сервере начнётся с точки, например <code>.Steve</code> — так видно, что ты с телефона.</span></li>
+      </ol>
+    </div>
   </section>
 
   <section>

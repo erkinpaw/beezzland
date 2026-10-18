@@ -118,6 +118,7 @@ rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
 SHOWN_IP=${DOMAIN:+play.$DOMAIN}
 SHOWN_IP=${SHOWN_IP:-$(curl -fsS4 https://ifconfig.me || hostname -I | cut -d' ' -f1)}
 sed -i "s|ip: \"localhost\"|ip: \"$SHOWN_IP\"|" "$BASE/site/config.js"
+if [[ $BEDROCK == 1 ]]; then sed -i "s|bedrock: false|bedrock: true|" "$BASE/site/config.js"; fi
 chown -R minecraft:minecraft "$BASE/site"
 cp "$SRC/systemd/mc-site.service" /etc/systemd/system/
 sed -e "s/@DOMAIN@/${DOMAIN:-_}/g" "$SRC/deploy/nginx-site.conf" > /etc/nginx/sites-available/beezzland
