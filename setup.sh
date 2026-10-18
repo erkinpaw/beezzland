@@ -5,6 +5,7 @@
 # Run as root from the mc-server folder:   sudo ./setup.sh
 # With a domain (DNS A records for it and www. must already point here):
 #   sudo DOMAIN=beezzland.ru EMAIL=you@example.com ./setup.sh
+# Phones/consoles too (Geyser + Floodgate, UDP 19132): add BEDROCK=1
 # Safe to re-run: existing worlds, secrets and database are kept.
 set -euo pipefail
 
@@ -15,6 +16,7 @@ PURPUR_MEM=${PURPUR_MEM:-3584M}     # R6G: 3.5 GB; R8G: 5120M
 PROXY_MEM=${PROXY_MEM:-512M}
 DOMAIN=${DOMAIN:-}                  # empty = site on http://<server-ip>/ without HTTPS
 EMAIL=${EMAIL:-}                    # for Let's Encrypt expiry notices
+BEDROCK=${BEDROCK:-0}               # 1 = Geyser + Floodgate: phones/consoles can join (UDP 19132)
 BASE=/opt/mc
 SRC=$(cd "$(dirname "$0")" && pwd)
 
@@ -83,6 +85,7 @@ echo "Velocity $VEL_VER"
 log "Plugins"
 python3 "$BASE/scripts/fetch_plugins.py" backend "$BASE/survival/plugins"
 python3 "$BASE/scripts/fetch_plugins.py" proxy "$BASE/proxy/plugins"
+if [[ $BEDROCK == 1 ]]; then python3 "$BASE/scripts/fetch_geyser.py" "$BASE/proxy/plugins"; fi
 cp "$SRC"/custom-plugins/*.jar "$BASE/survival/plugins/"   # our own plugins (WebTrade, BeezzWorlds)
 cp "$SRC"/custom-plugins/proxy/*.jar "$BASE/proxy/plugins/"  # our proxy plugins (BeezzAuth)
 cp "$SRC/site/assets/server-icon.png" "$BASE/proxy/server-icon.png"
@@ -128,6 +131,7 @@ ufw allow OpenSSH
 ufw allow 'Nginx Full' comment 'Website (80/443)'
 ufw allow 25565/tcp comment 'Minecraft (Velocity)'
 ufw allow 24454/udp comment 'Simple Voice Chat'
+if [[ $BEDROCK == 1 ]]; then ufw allow 19132/udp comment "Bedrock (Geyser)"; fi
 ufw --force enable
 
 log "Start"
