@@ -51,6 +51,10 @@ public final class AuthService implements Provider.Inbox {
     private final Map<String, Provider> providers = new ConcurrentHashMap<>();
     private final Map<String, PendingLink> codes = new ConcurrentHashMap<>();
     private final Map<String, PendingConfirm> confirms = new ConcurrentHashMap<>();
+    /** provider:userId → times of wrong codes; guessing someone else's code must stay hopeless */
+    private final Map<String, java.util.Deque<Long>> wrongCodes = new ConcurrentHashMap<>();
+    private static final int MAX_WRONG_CODES = 5;
+    private static final long WRONG_CODE_WINDOW = TimeUnit.MINUTES.toMillis(15);
 
     public AuthService(AuthConfig cfg, Accounts accounts, Logger log) {
         this.cfg = cfg;
@@ -167,7 +171,24 @@ public final class AuthService implements Provider.Inbox {
                     + "Зайди на сервер — он покажет 6-значный код. Пришли этот код сюда, "
                     + "и твой ник будет привязан к этому аккаунту. Паролей не нужно.";
         }
-        return link(from.id(), userId, m.group(1));
+        String who = from.id() + ":" + userId;
+        long now = System.currentTimeMillis();
+        java.util.Deque<Long> wrong = wrongCodes.computeIfAbsent(who, k -> new java.util.ArrayDeque<>());
+        synchronized (wrong) {
+            while (!wrong.isEmpty() && wrong.peekFirst() < now - WRONG_CODE_WINDOW) wrong.pollFirst();
+            if (wrong.size() >= MAX_WRONG_CODES) {
+                return "Слишком много неверных кодов. Подожди 15 минут и попробуй снова.";
+            }
+            String code = m.group(1);
+            PendingLink pl = codes.get(code);
+            if (pl == null || pl.expires < now) {
+                wrong.addLast(now);
+                if (wrong.size() == MAX_WRONG_CODES) {
+                    log.warn("{} {} sent {} wrong link codes in a row, paused for 15 minutes", from.title(), userId, MAX_WRONG_CODES);
+                }
+            }
+            return link(from.id(), userId, code);
+        }
     }
 
     /** Also used by the admin command to link by hand. */

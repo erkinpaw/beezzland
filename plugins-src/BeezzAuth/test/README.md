@@ -19,4 +19,4 @@ real bot token is needed and the main proxy (25565) is not touched.
    ignored, button confirmation from a new IP.
 
 Uses mineflayer from `../../../loadtest/node_modules` (`npm install` there first).
-Last run 18.10.2026: Telegram 11/11 PASS, VK 9/9 PASS, Discord 9/9 PASS.
+Last run 18.10.2026: Telegram 11/11, VK 9/9, Discord 9/9, brute force 4/4 — all PASS. `bruteforcetest.js` needs only the fake Telegram.
