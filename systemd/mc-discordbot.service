@@ -1,0 +1,14 @@
+[Unit]
+Description=BeezzLand Discord moderation bot (commands, complaint tickets)
+After=network-online.target
+
+[Service]
+User=minecraft
+WorkingDirectory=/opt/mc/discord/bot
+# token in /opt/mc/discord/bot/.env (DISCORD_TOKEN=...), chmod 600, owned by minecraft
+ExecStart=/usr/bin/node bot.js
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

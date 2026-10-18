@@ -1,0 +1,8 @@
+{
+  "prefix": "!",
+  "logChannel": "модерация",
+  "ticketPanelChannel": "жалобы",
+  "ticketCategory": "🛠 Помощь",
+  "staffRoles": ["Владелец", "Админ", "Модер", "Хелпер"],
+  "deleteMessagesOnBan": "1h"
+}
