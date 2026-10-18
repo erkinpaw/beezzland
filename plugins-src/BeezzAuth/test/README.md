@@ -11,5 +11,9 @@ real bot token is needed and the main proxy (25565) is not touched.
 4. Set `session-hours: 0`, reset `sessionUntil` in `accounts.json`, restart the test proxy, then
    `node authtest.js confirm` — «Это я», «Это не я», stranger's press, timeout, late «Это я».
 
+5. VK: `python fake_vk.py` (127.0.0.1:8098), enable `vk` in the test config with
+   `api-base: "http://127.0.0.1:8098/method"`, then `node vktest.js` — link by a VK message,
+   then a login from 127.0.0.2 (a «new IP» without touching the network) confirmed by a VK callback button.
+
 Uses mineflayer from `../../../loadtest/node_modules` (`npm install` there first).
-Last run 18.10.2026: 11/11 PASS.
+Last run 18.10.2026: Telegram 11/11 PASS, VK 9/9 PASS.
