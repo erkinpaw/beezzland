@@ -205,6 +205,10 @@ def main():
         t = yaml_set(t, ["settings", "internal-webserver", "port"], "8100")
         t = yaml_set(t, ["settings", "web-address"], q(S.get("site_url", "https://beezzland.ru") + "/map/"))
         t = yaml_set(t, ["settings", "performance", "render-threads"], "2")  # default -1 = half the cores
+        # by default it calls System.gc() while/after rendering: 300-450 ms full-GC pauses under load
+        # (the service's -XX:+DisableExplicitGC also blocks it; this covers runs without Aikar's flags)
+        t = yaml_set(t, ["settings", "performance", "gc", "when-running"], "false")
+        t = yaml_set(t, ["settings", "performance", "gc", "when-finished"], "false")
         write(p, t)
     print("configs patched")
 
