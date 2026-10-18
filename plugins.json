@@ -90,6 +90,10 @@
     {
       "file": "custom-plugins/BeezzWorlds-1.0.0.jar",
       "why": "миры: открытие командой, мир ферм + свой незер, портал из пчелиных сот (исходники: plugins-src/BeezzWorlds)"
+    },
+    {
+      "file": "custom-plugins/BeezzCore-1.0.0.jar",
+      "why": "приветствие новичков, /rules, /links, подсказки в чате (исходники: plugins-src/BeezzCore)"
     }
   ],
   "custom_proxy": [

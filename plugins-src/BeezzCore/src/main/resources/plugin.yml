@@ -1,0 +1,20 @@
+name: BeezzCore
+version: '${version}'
+main: land.beezz.core.BeezzCore
+api-version: '26.3'
+description: BeezzLand — приветствие новичков, /rules, /links и подсказки в чате
+
+commands:
+  rules:
+    description: Правила сервера
+    aliases: [правила]
+  links:
+    description: Сайт и соцсети сервера
+    aliases: [site, discord, vk, tg, ссылки]
+  beezzcore:
+    description: Перечитать config.yml
+    permission: beezzcore.admin
+
+permissions:
+  beezzcore.admin:
+    default: op
