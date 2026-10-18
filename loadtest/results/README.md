@@ -18,5 +18,7 @@ Heap 3584M unless noted; "g1" = plain `-XX:+UseG1GC`, "aikar" = flags from `syst
 | 15 / 16 | mixed with Pl3xMap rendering (its System.gc() not blocked) vs no map |
 | 20–22 | mixed with prod flags: Pl3xMap rendering / no map / Pl3xMap paused |
 | 23 / 24 | all explore with prod flags, map paused: default vs entity tuning on the main world |
+| 25 | mixed with prod flags, squaremap 1.4.3 rendering |
+| map-*.jpg | the same spot rendered by Pl3xMap (vintage_story) and squaremap |
 
 Run 10 lacks the first ~80 s (joining) because its monitor started late.
