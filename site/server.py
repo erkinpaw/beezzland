@@ -117,10 +117,15 @@ class Handler(SimpleHTTPRequestHandler):
             self.close_connection = True
             return
         body = r.read()
+        html = r.headers.get("Content-Type", "").startswith("text/html")
         self.send_response(r.status if hasattr(r, "status") else r.code)
         for k, v in r.headers.items():
-            if k.lower() not in HOP and k.lower() != "content-length":
+            if k.lower() not in HOP and k.lower() != "content-length" and not (html and k.lower() == "cache-control"):
                 self.send_header(k, v)
+        if html:
+            # the map app's page must always be revalidated: after switching map plugins
+            # browsers otherwise keep showing the old app from their cache
+            self.send_header("Cache-Control", "no-cache")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)

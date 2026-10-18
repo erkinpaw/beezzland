@@ -31,12 +31,13 @@
       <a href="/">Главная</a>
       <a class="on" href="map.html">Карта</a>
       <a href="calculator.html">Калькулятор</a>
-      <a class="hide-sm" href="/map/" target="_blank" rel="noopener">На весь экран ↗</a>
+      <a class="hide-sm" href="/map/?v=pl3xmap" target="_blank" rel="noopener">На весь экран ↗</a>
     </nav>
   </div>
 </header>
 <div class="map-frame" data-frame>
-  <iframe src="/map/" title="Карта мира BeezzLand" allowfullscreen></iframe>
+  <!-- ?v= changes when the map plugin changes, so browsers drop the old cached app -->
+  <iframe src="/map/?v=pl3xmap" title="Карта мира BeezzLand" allowfullscreen></iframe>
   <div class="fallback"><div><h2>Карта спит 🐝</h2><p>Сервер карты сейчас недоступен. Загляни чуть позже.</p></div></div>
 </div>
 <script>
