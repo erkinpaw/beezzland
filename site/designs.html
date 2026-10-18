@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Варианты дизайна — BeezzLand</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; background: #0b0d12; color: #e7eefb; font: 15px/1.5 "Manrope", system-ui, sans-serif; }
+    header { padding: 28px 24px 8px; max-width: 1500px; margin: 0 auto; }
+    h1 { font: 18px "Press Start 2P", monospace; margin: 0 0 10px; }
+    p { color: #8d9cbb; margin: 0; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 24px; max-width: 1500px; margin: 0 auto; }
+    figure { margin: 0; background: #12161f; border: 1px solid #222a3a; border-radius: 14px; overflow: hidden; }
+    .frame { position: relative; height: 560px; overflow: hidden; }
+    /* render the page at desktop width and scale it into the card */
+    iframe { width: 1280px; height: 1400px; border: 0; transform: scale(.5); transform-origin: 0 0; position: absolute; }
+    figcaption { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-top: 1px solid #222a3a; }
+    figcaption b { font-size: 16px; }
+    figcaption span { color: #8d9cbb; flex: 1; }
+    figcaption a { color: #111; background: #facc15; padding: 8px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Варианты дизайна BeezzLand</h1>
+  <p>Один и тот же сайт в четырёх оформлениях. «Открыть» — посмотреть вживую (тема запомнится на всех страницах, включая карту и калькулятор).</p>
+</header>
+<div class="grid" data-grid></div>
+<script>
+  const themes = [
+    ["hive", "Синий улей", "текущий: тёмно-синий, соты на фоне, медовые акценты"],
+    ["meadow", "Луг", "светлая и тёплая: небо с пиксельными облаками, трава, мёд"],
+    ["retro", "Ретро", "как интерфейс Minecraft: серые панели с фаской, каменный фон, пиксельный шрифт"],
+    ["night", "Ночной улей", "почти чёрный фон, светящийся мёд, стеклянные карточки, светлячки"],
+  ];
+  const grid = document.querySelector("[data-grid]");
+  for (const [key, name, about] of themes) {
+    const fig = document.createElement("figure");
+    fig.innerHTML = `<div class="frame"><iframe title="${name}"></iframe></div>
+      <figcaption><b>${name}</b><span>${about}</span><a href="index.html?theme=${key}">Открыть</a></figcaption>`;
+    // preview frames must not overwrite the visitor's remembered choice
+    fig.querySelector("iframe").src = `index.html?theme=${key}&preview=1`;
+    grid.append(fig);
+  }
+  // fit the 1280px-wide page into each card, whatever the card width
+  const fit = () => document.querySelectorAll(".frame").forEach((f) => {
+    const k = f.clientWidth / 1280;
+    f.querySelector("iframe").style.transform = `scale(${k})`;
+    f.style.height = Math.round(1120 * k) + "px";
+  });
+  addEventListener("resize", fit);
+  fit();
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* Тема «Ночной улей»: почти чёрный фон, светящийся мёд, стеклянные карточки и светлячки. */
+@import url("https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;900&display=swap&subset=cyrillic");
+
+:root {
+  --bg: #05040a;
+  --surface: rgba(255, 255, 255, .04);
+  --surface-2: rgba(250, 204, 21, .08);
+  --border: rgba(255, 255, 255, .09);
+  --text: #f5f3ea;
+  --muted: #a39f91;
+  --honey: #fbbf24;
+  --blue: #fbbf24;
+  --blue-3: #fde68a;
+  --radius: 22px;
+}
+
+body { background: var(--bg); }
+a { color: #fde68a; }
+
+/* warm glow + drifting fireflies */
+.hive {
+  background:
+    radial-gradient(700px 420px at 70% 0%, rgba(251, 191, 36, .18), transparent 60%),
+    radial-gradient(600px 400px at 0% 40%, rgba(124, 58, 237, .14), transparent 60%),
+    radial-gradient(500px 380px at 100% 90%, rgba(251, 146, 60, .10), transparent 60%);
+  mask-image: none;
+}
+.hive::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 12% 30%, #fde68a, transparent),
+    radial-gradient(2px 2px at 78% 18%, #fde68a, transparent),
+    radial-gradient(3px 3px at 40% 70%, #fbbf24, transparent),
+    radial-gradient(2px 2px at 88% 62%, #fde68a, transparent),
+    radial-gradient(2px 2px at 25% 85%, #fbbf24, transparent),
+    radial-gradient(2px 2px at 60% 40%, #fde68a, transparent);
+  animation: fireflies 9s ease-in-out infinite alternate;
+  opacity: .8;
+}
+@keyframes fireflies { from { transform: translateY(0); opacity: .4; } to { transform: translateY(-30px); opacity: 1; } }
+
+header.top { background: rgba(5, 4, 10, .6); border-bottom-color: var(--border); }
+.brand b { color: var(--honey); }
+
+h1, h2 { font-family: "Unbounded", sans-serif; letter-spacing: -.02em; }
+h1 { font-size: 64px; font-weight: 900; line-height: 1.05; }
+h1 .honey, h1 .sky {
+  text-shadow: none;
+  background: linear-gradient(120deg, #fde68a, #fbbf24 40%, #f97316);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+h1 .sky { background: linear-gradient(120deg, #fff, #d6d3c4); -webkit-background-clip: text; background-clip: text; }
+h2 { font-size: 30px; font-weight: 700; }
+.eyebrow { color: #fde68a; }
+.eyebrow::before { border-radius: 50%; }
+
+.btn {
+  color: #1a1204; border-radius: 999px;
+  background: linear-gradient(180deg, #fde68a, #fbbf24);
+  box-shadow: 0 0 0 1px rgba(253, 230, 138, .4) inset, 0 0 32px rgba(251, 191, 36, .45);
+}
+.btn:hover { color: #1a1204; box-shadow: 0 0 0 1px rgba(253, 230, 138, .6) inset, 0 0 48px rgba(251, 191, 36, .7); }
+.ip { border-radius: 999px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(253, 230, 138, .35); }
+.hero-art img { filter: drop-shadow(0 0 40px rgba(251, 191, 36, .45)); }
+
+.status, .card, .steps li, .map-teaser {
+  background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+  border: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  border-radius: var(--radius);
+}
+.status { overflow: hidden; gap: 0; background: rgba(255, 255, 255, .04); }
+.status > div { background: transparent; border-right: 1px solid var(--border); }
+.status > div:last-child { border-right: 0; }
+.card:hover { border-color: rgba(251, 191, 36, .45); box-shadow: 0 0 40px -10px rgba(251, 191, 36, .35); }
+.card .ico { border-radius: 50%; background: rgba(251, 191, 36, .1); border-color: rgba(251, 191, 36, .25); }
+.steps li::before { border-radius: 50%; box-shadow: 0 0 18px rgba(251, 191, 36, .6); }
+.rules li::before { border-radius: 50%; background: var(--honey); box-shadow: 0 0 10px var(--honey); }
+.map-teaser { background: linear-gradient(120deg, rgba(251, 191, 36, .14), rgba(255, 255, 255, .02) 60%); }
+footer { border-top-color: var(--border); }
+@media (max-width: 860px) { h1 { font-size: 40px; } }

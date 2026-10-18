@@ -1,0 +1,95 @@
+/* Тема «Луг»: светлая и тёплая — небо, трава, мёд. Синий остаётся акцентом ссылок и кнопок. */
+@import url("https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&display=swap&subset=cyrillic");
+
+:root {
+  --bg: #fffaf0;
+  --bg-2: #fff4dc;
+  --surface: #ffffff;
+  --surface-2: #fff7e3;
+  --border: #f0dfb6;
+  --text: #1f2a44;
+  --muted: #5d6b86;
+  --blue: #2563eb;
+  --blue-2: #1d4ed8;
+  --blue-3: #1d4ed8;
+  --honey: #f59e0b;
+  --ok: #16a34a;
+  --bad: #dc2626;
+  --body: "Rubik", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+body { background: var(--bg); }
+a:hover { color: #0b2a7a; }
+
+/* sky over the header area, soft honeycomb lower down */
+.hive {
+  background:
+    linear-gradient(#bfe3ff 0, #e8f5ff 340px, rgba(255, 250, 240, 0) 620px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 0l28 16v32L28 64 0 48V16zM28 64v33M0 48l-28 16M56 48l28 16' fill='none' stroke='%23f2d48a' stroke-opacity='.55'/%3E%3C/svg%3E");
+  mask-image: none;
+}
+/* pixel clouds */
+.hive::before, .hive::after {
+  content: ""; position: absolute; top: 110px; width: 18px; height: 18px; background: transparent;
+  box-shadow:
+    18px 0 #fff, 36px 0 #fff, 54px 0 #fff, 0 18px #fff, 18px 18px #fff, 36px 18px #fff, 54px 18px #fff, 72px 18px #fff,
+    36px -18px #fff, 54px -18px #fff;
+  animation: drift 60s linear infinite;
+}
+.hive::after { top: 210px; left: 60%; transform: scale(.7); animation-duration: 90s; }
+@keyframes drift { from { translate: -10vw 0; } to { translate: 110vw 0; } }
+
+header.top { background: rgba(255, 250, 240, .82); border-bottom-color: var(--border); }
+nav a { color: var(--muted); }
+nav a:hover, nav a.on { color: var(--text); }
+.brand b { color: var(--honey); }
+
+.btn {
+  color: #1f1300;
+  background: linear-gradient(180deg, #fcd34d, #f59e0b);
+  box-shadow: 0 4px 0 #b45309, 0 10px 24px -10px rgba(180, 83, 9, .6);
+  border-radius: 12px;
+}
+.btn:hover { color: #1f1300; box-shadow: 0 5px 0 #b45309, 0 14px 28px -10px rgba(180, 83, 9, .7); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b45309; }
+
+.eyebrow { color: var(--blue); }
+h1 .honey { color: #f59e0b; text-shadow: 0 4px 0 #92400e; }
+h1 .sky { color: #2563eb; text-shadow: 0 4px 0 #1e3a8a; }
+.lead { color: #3c4a66; }
+.ip { background: #fff; border: 2px dashed #f2c96b; color: var(--text); }
+.ip:hover { border-color: var(--honey); }
+.hero-art img { filter: drop-shadow(0 24px 30px rgba(245, 158, 11, .35)); }
+.hero-art::after { background: rgba(31, 42, 68, .25); }
+
+/* grass strip under the hero */
+.hero { position: relative; }
+.hero::after {
+  content: ""; position: absolute; left: 50%; bottom: 0; width: 100vw; translate: -50% 0; height: 24px;
+  background:
+    linear-gradient(90deg, #4ade80 0 12px, #22c55e 12px 24px, #16a34a 24px 36px, #22c55e 36px 48px) 0 0 / 48px 12px repeat-x,
+    linear-gradient(#8b5a2b, #6b4423) 0 12px / 100% 12px no-repeat;
+  image-rendering: pixelated; z-index: -1;
+}
+.hero { padding-bottom: 80px; margin-bottom: 40px; }
+
+.status { background: var(--border); border-color: var(--border); border-radius: 18px; box-shadow: 0 12px 30px -18px rgba(180, 120, 20, .5); }
+.status > div { background: #fff; }
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 10px 30px -22px rgba(120, 80, 10, .6);
+}
+.card:hover { border-color: #f2c96b; }
+.card .ico { background: #fff7e3; border-color: #f6e2b0; border-radius: 14px; }
+.card p, .steps span, .sub, .map-teaser p, footer { color: var(--muted); }
+
+.steps li { background: #fff; border-color: var(--border); border-radius: 18px; }
+.rules li { border-bottom-color: var(--border); }
+.rules li::before { background: var(--honey); }
+.map-teaser { background: linear-gradient(120deg, #dbeafe, #fff7e3 60%); border-color: #d6e4fb; }
+footer { border-top-color: var(--border); }
+.toast { background: #fff; color: var(--text); }
