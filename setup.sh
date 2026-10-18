@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # Minecraft server setup for Ubuntu 24.04: Java 25, MariaDB, Velocity, Purpur 26.3,
-# plugins, systemd services, daily backups, firewall.
+# plugins, systemd services, daily backups, firewall, website behind nginx (+HTTPS).
 #
 # Run as root from the mc-server folder:   sudo ./setup.sh
+# With a domain (DNS A records for it and www. must already point here):
+#   sudo DOMAIN=beezzland.ru EMAIL=you@example.com ./setup.sh
+# Phones/consoles too (Geyser + Floodgate, UDP 19132): add BEDROCK=1
 # Safe to re-run: existing worlds, secrets and database are kept.
 set -euo pipefail
 
@@ -11,6 +14,9 @@ ONLINE_MODE=${ONLINE_MODE:-false}   # false = pirates allowed (needs our auth pl
 MOTD=${MOTD:-"<gradient:#facc15:#60a5fa><bold>BeezzLand</bold></gradient> <gray>— ванильное выживание</gray>"}
 PURPUR_MEM=${PURPUR_MEM:-3584M}     # R6G: 3.5 GB; R8G: 5120M
 PROXY_MEM=${PROXY_MEM:-512M}
+DOMAIN=${DOMAIN:-}                  # empty = site on http://<server-ip>/ without HTTPS
+EMAIL=${EMAIL:-}                    # for Let's Encrypt expiry notices
+BEDROCK=${BEDROCK:-0}               # 1 = Geyser + Floodgate: phones/consoles can join (UDP 19132)
 BASE=/opt/mc
 SRC=$(cd "$(dirname "$0")" && pwd)
 
@@ -19,7 +25,7 @@ log() { echo -e "\n=== $*"; }
 
 log "Packages"
 apt-get update -q
-apt-get install -yq curl jq zstd python3 mariadb-server ufw ca-certificates gnupg
+apt-get install -yq curl jq zstd python3 mariadb-server ufw ca-certificates gnupg nginx
 
 log "Java 25 (Temurin)"
 if ! java -version 2>&1 | grep -q '"25'; then
@@ -45,6 +51,9 @@ json.dump({"db_name": "mc", "db_user": "mc", "db_password": secrets.token_urlsaf
            "rcon_password": secrets.token_urlsafe(24),
            "online_mode": sys.argv[2] == "true", "motd": sys.argv[3]}, open(sys.argv[1], "w"), indent=2)
 EOF
+fi
+if [[ -n $DOMAIN ]]; then  # the site address goes into the WebTrade calculator button and map links
+  jq --arg u "https://$DOMAIN" '.site_url = $u' "$BASE/.secrets.json" > "$BASE/.secrets.tmp" && mv "$BASE/.secrets.tmp" "$BASE/.secrets.json"
 fi
 chown minecraft:minecraft "$BASE/.secrets.json"; chmod 600 "$BASE/.secrets.json"
 S() { jq -r ".$1" "$BASE/.secrets.json"; }
@@ -76,9 +85,9 @@ echo "Velocity $VEL_VER"
 log "Plugins"
 python3 "$BASE/scripts/fetch_plugins.py" backend "$BASE/survival/plugins"
 python3 "$BASE/scripts/fetch_plugins.py" proxy "$BASE/proxy/plugins"
+if [[ $BEDROCK == 1 ]]; then python3 "$BASE/scripts/fetch_geyser.py" "$BASE/proxy/plugins"; fi
 cp "$SRC"/custom-plugins/*.jar "$BASE/survival/plugins/"   # our own plugins (WebTrade, BeezzWorlds)
 cp "$SRC"/custom-plugins/proxy/*.jar "$BASE/proxy/plugins/"  # our proxy plugins (BeezzAuth)
-python3 "$SRC/scripts/make_logo.py" "$BASE/assets" 2>/dev/null || true   # needs python3-pil; optional
 cp "$SRC/site/assets/server-icon.png" "$BASE/proxy/server-icon.png"
 chown -R minecraft:minecraft "$BASE"
 
@@ -104,10 +113,25 @@ log "Configure"
 cp -r "$SRC/configs/." "$BASE/" && chown -R minecraft:minecraft "$BASE"
 sudo -u minecraft python3 "$BASE/scripts/configure.py" "$BASE"
 
+log "Website"
+rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
+SHOWN_IP=${DOMAIN:+play.$DOMAIN}
+SHOWN_IP=${SHOWN_IP:-$(curl -fsS4 https://ifconfig.me || hostname -I | cut -d' ' -f1)}
+sed -i "s|ip: \"localhost\"|ip: \"$SHOWN_IP\"|" "$BASE/site/config.js"
+chown -R minecraft:minecraft "$BASE/site"
+cp "$SRC/systemd/mc-site.service" /etc/systemd/system/
+sed -e "s/@DOMAIN@/${DOMAIN:-_}/g" "$SRC/deploy/nginx-site.conf" > /etc/nginx/sites-available/beezzland
+ln -sf /etc/nginx/sites-available/beezzland /etc/nginx/sites-enabled/beezzland
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
+systemctl daemon-reload && systemctl enable --now mc-site
+
 log "Firewall"
 ufw allow OpenSSH
+ufw allow 'Nginx Full' comment 'Website (80/443)'
 ufw allow 25565/tcp comment 'Minecraft (Velocity)'
 ufw allow 24454/udp comment 'Simple Voice Chat'
+if [[ $BEDROCK == 1 ]]; then ufw allow 19132/udp comment "Bedrock (Geyser)"; fi
 ufw --force enable
 
 log "Start"
@@ -119,6 +143,15 @@ log "Ranks and game rules"
 for i in $(seq 1 120); do journalctl -u mc-survival --since "-5min" | grep -q 'Done (' && break; sleep 2; done
 mapfile -t LP_CMDS < <(grep -v '^#' "$SRC/scripts/init_commands.txt" | grep -v '^$')
 sudo -u minecraft python3 "$BASE/scripts/rcon.py" "${LP_CMDS[@]}" "tab reload" >/dev/null && echo "ranks created"
+
+if [[ -n $DOMAIN && -n $EMAIL ]]; then
+  log "HTTPS (Let's Encrypt)"
+  apt-get install -yq certbot python3-certbot-nginx
+  certbot --nginx --non-interactive --agree-tos -m "$EMAIL" --redirect -d "$DOMAIN" -d "www.$DOMAIN" \
+    || echo "certbot failed: check that $DOMAIN and www.$DOMAIN point to this server, then re-run setup.sh"
+fi
+
 echo
-echo "Done. Connect: <server-ip>:25565  (whitelist is ON: add players with"
+echo "Site: ${DOMAIN:+https://$DOMAIN}${DOMAIN:-http://$SHOWN_IP/}"
+echo "Done. Connect: $SHOWN_IP:25565  (whitelist is ON: add players with"
 echo "  python3 $BASE/scripts/rcon.py 'whitelist add NICK')"

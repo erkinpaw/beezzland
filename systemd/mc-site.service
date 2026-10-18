@@ -1,0 +1,13 @@
+[Unit]
+Description=BeezzLand website (status API, map proxy, calculator)
+After=network-online.target mc-proxy.service
+
+[Service]
+User=minecraft
+WorkingDirectory=/opt/mc/site
+ExecStart=/usr/bin/python3 -I server.py --host 127.0.0.1 --port 8080 --mc 127.0.0.1:25565 --map 127.0.0.1:8100 --webtrade /opt/mc/survival/plugins/WebTrade
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

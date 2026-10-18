@@ -1,0 +1,49 @@
+# BeezzCore — приветствие новичков, /rules, /links и подсказки в чате.
+# Текст в формате MiniMessage: <#FACC15>медовый</#FACC15>, <gray>, <bold>, <click:open_url:'https://…'>ссылка</click>
+
+site: "https://beezzland.ru"
+
+welcome:
+  # титр при самом первом входе на сервер
+  title: "<#FACC15><bold>Добро пожаловать</bold></#FACC15>"
+  subtitle: "<gray>на <#FACC15>Beezz</#FACC15><#60A5FA>Land</#60A5FA> — ванильное выживание"
+  # сообщение в чат при первом входе
+  first-join:
+    - ""
+    - "<#FACC15><bold>BeezzLand</bold></#FACC15> <gray>— честное выживание без телепортов."
+    - "<gray>• Правила: <#93C5FD><click:run_command:'/rules'><hover:show_text:'Показать правила'>/rules</hover></click></#93C5FD>"
+    - "<gray>• Карта мира и калькулятор биржи: <#93C5FD><click:open_url:'{site}'>{site}</click></#93C5FD>"
+    - "<gray>• Наши соцсети: <#93C5FD><click:run_command:'/links'>/links</click></#93C5FD>"
+    - ""
+  # всем в чат, когда новичок заходит впервые ({player} — ник)
+  broadcast-first-join: "<gray>Поприветствуем нового игрока <#FACC15>{player}</#FACC15>!"
+
+rules:
+  - "<#FACC15><bold>Правила BeezzLand</bold></#FACC15>"
+  - "<gray>1. Не ломай и не воруй чужое — всё откатывается, а ты отправляешься в бан."
+  - "<gray>2. Никаких читов, x-ray и модов на преимущество."
+  - "<gray>3. Уважай игроков: без оскорблений и рекламы в чате."
+  - "<gray>4. Лаг-машины и фермы, роняющие сервер, запрещены."
+  - "<gray>5. Строй минимум в 100 блоках от чужих домов."
+  - "<gray>6. Нашёл баг — сообщи администрации, а не используй."
+  - "<dark_gray>Полная версия: <#93C5FD><click:open_url:'{site}'>{site}</click>"
+
+links:
+  - "<#FACC15><bold>BeezzLand в сети</bold></#FACC15>"
+  - "<gray>Сайт и карта: <#93C5FD><click:open_url:'{site}'>{site}</click>"
+  - "<gray>ВКонтакте: <#93C5FD><click:open_url:'https://vk.com/beezzland'>vk.com/beezzland</click>"
+  - "<gray>Telegram: <#93C5FD><click:open_url:'https://t.me/beezzland'>t.me/beezzland</click>"
+  - "<gray>Discord: <#93C5FD><click:open_url:'https://discord.gg/beezzland'>discord.gg/beezzland</click>"
+
+tips:
+  # раз в сколько минут показывать подсказку (0 — выключить); показываются по кругу, только если кто-то онлайн
+  every-minutes: 7
+  # без эмодзи: шрифт Minecraft их не рисует, игрок увидит квадраты
+  prefix: "<dark_gray>[<#FACC15>Совет</#FACC15>]</dark_gray> "
+  messages:
+    - "<gray>Посмотри, что строят соседи, на живой карте: <#93C5FD><click:open_url:'{site}/map.html'>карта мира</click>"
+    - "<gray>Нужны ресурсы? Закажи их на бирже за ары: <#93C5FD><click:run_command:'/trade'>/trade</click>"
+    - "<gray>Посчитай заказ заранее в <#93C5FD><click:open_url:'{site}/calculator.html'>калькуляторе</click><gray> на сайте."
+    - "<gray>Пиши <#FACC15>!</#FACC15> перед сообщением, чтобы его увидел весь сервер, а не только соседи."
+    - "<gray>Ночь проходит, когда спит половина игроков онлайн — ложись спать вместе со всеми."
+    - "<gray>Голосуй за сервер на мониторингах — это помогает BeezzLand расти!"

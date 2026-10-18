@@ -9,6 +9,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script>
+    // Design options: ?theme=meadow|retro|night (remembered), ?theme=hive = original.
+    (function () {
+      var q = new URLSearchParams(location.search), t = q.get("theme");
+      try {
+        if (!t) t = localStorage.getItem("beezz-theme");
+        else if (!q.has("preview")) localStorage.setItem("beezz-theme", t);
+      } catch (e) {}
+      if (t && t !== "hive" && /^[a-z]+$/.test(t)) {
+        document.documentElement.dataset.theme = t;
+        document.write('<link rel="stylesheet" href="themes/' + t + '.css">');
+      }
+    })();
+  </script>
 </head>
 <body>
 <div class="hive"></div>

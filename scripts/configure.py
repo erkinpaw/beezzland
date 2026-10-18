@@ -175,6 +175,11 @@ def main():
         site = S.get("site_url", "https://beezzland.ru")
         write(p, yaml_set(read(p), ["calculator", "url"], q(site + "/calculator.html")))
 
+    # --- BeezzCore: links in the welcome, /rules, /links and tips point to our site ---
+    p = os.path.join(SURV, "plugins", "BeezzCore", "config.yml")
+    if os.path.exists(p):
+        write(p, yaml_set(read(p), ["site"], q(S.get("site_url", "https://beezzland.ru"))))
+
     # --- Simple Voice Chat: Purpur listens on localhost only, voice UDP must be public ---
     p = os.path.join(SURV, "plugins", "voicechat", "voicechat-server.properties")
     if os.path.exists(p):

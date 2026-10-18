@@ -172,7 +172,8 @@
 4. ☐ Плагин авторизации через ВК / TG / Discord.
 5. ☐ Discord-сервер: каналы, роли, DiscordSRV, бот статуса.
 6. ☐ Сайт: главная, статус, правила, карта Pl3xMap, топы (Plan).
-7. ☐ Мониторинг и ежедневный отчёт от Claude по расписанию.
+7. ☐ Мониторинг и ежедневный отчёт от Claude по расписанию: `python3 /opt/mc/scripts/report.py` выдаёт Markdown
+   (онлайн, TPS/MSPT, открытые миры, перезапуски и зависания из журнала, диск, память, свежесть бэкапа, новые игроки BeezzAuth).
 8. ☐ Запуск: ролик-анонс на YouTube, Telegram, мониторинги (HotMC, MinecraftRating, MonitoringMinecraft), Shorts/TikTok.
 
 ## Правила
