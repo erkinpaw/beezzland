@@ -20,6 +20,8 @@ java {
 }
 
 tasks.processResources {
+    // the detailed rules are the same file as on the site: docs/RULES.md
+    from("../../docs/RULES.md") { rename { "full-rules.md" } }
     val props = mapOf("version" to version)
     filesMatching("plugin.yml") { expand(props) }
 }

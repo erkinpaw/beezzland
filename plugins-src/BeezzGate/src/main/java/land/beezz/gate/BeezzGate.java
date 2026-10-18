@@ -29,10 +29,11 @@ public final class BeezzGate extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveResource("rules.yml", false);
+        saveResource("full-rules.md", true); // always the version shipped with the plugin (= docs/RULES.md)
         saveDefaultConfig();
         registration = new Registration(getConfig().getString("auth-api", "").replaceAll("/+$", ""),
                 getConfig().getString("auth-secret", ""));
-        quiz = new Quiz(new File(getDataFolder(), "rules.yml"));
+        quiz = new Quiz(new File(getDataFolder(), "rules.yml"), new File(getDataFolder(), "full-rules.md"));
         passedFile = new File(getDataFolder(), "passed.yml");
         passed = YamlConfiguration.loadConfiguration(passedFile);
         getServer().getPluginManager().registerEvents(this, this);

@@ -36,13 +36,15 @@ final class Quiz {
     final int version;
     private final int ask;
     private final String rules;
+    private final String fullRules;
     private final List<Question> questions = new ArrayList<>();
 
-    Quiz(File file) {
+    Quiz(File file, File fullRulesFile) {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(file);
         version = y.getInt("version", 1);
         ask = y.getInt("ask", 0);
         rules = y.getString("rules", "").trim();
+        fullRules = markdown(fullRulesFile);
         for (Map<?, ?> q : y.getMapList("questions")) {
             questions.add(new Question(String.valueOf(q.get("text")), "да".equalsIgnoreCase(String.valueOf(q.get("answer")))));
         }
@@ -89,16 +91,67 @@ final class Quiz {
                 ? "<#F87171>Ответ неверный.</#F87171> <gray>Прочитай правила ещё раз и пройди тест заново.</gray>"
                 : "<gray>Добро пожаловать! Прочитай правила — после них будет короткий тест из "
                   + count() + " вопросов.</gray>";
-        String button = afterMistake ? "<#FACC15>Прочитал, пройти тест заново" : "<#FACC15>Прочитал, начать тест";
+        String button = afterMistake ? "<#FACC15>Пройти тест заново" : "<#FACC15>Прочитал, начать тест";
         Component body = MM.deserialize(head + "\n\n<white>" + rules.replace("\n", "\n\n"));
         Dialog d = Dialog.create(b -> b.empty()
                 .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Правила BeezzLand</bold>"))
                         .canCloseWithEscape(false)
                         .body(List.of(DialogBody.plainMessage(body, 300)))
                         .build())
-                .type(DialogType.notice(ActionButton.builder(MM.deserialize(button)).width(240)
-                        .action(DialogAction.customClick((view, aud) -> ask(who, pick(), 0, done), ONCE)).build())));
+                .type(DialogType.multiAction(List.of(
+                        ActionButton.builder(MM.deserialize("<white>Подробные правила")).width(180)
+                                .action(DialogAction.customClick((view, aud) -> showFullRules(who, done, afterMistake), ONCE)).build(),
+                        ActionButton.builder(MM.deserialize(button)).width(180)
+                                .action(DialogAction.customClick((view, aud) -> ask(who, pick(), 0, done), ONCE)).build()))
+                        .columns(2).build()));
         who.showDialog(d);
+    }
+
+    /** All the rules (docs/RULES.md), with a way back to the short version and the test. */
+    private void showFullRules(Audience who, CompletableFuture<Boolean> done, boolean afterMistake) {
+        Dialog d = Dialog.create(b -> b.empty()
+                .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Правила BeezzLand</bold> <gray>— подробно"))
+                        .canCloseWithEscape(false)
+                        .body(List.of(DialogBody.plainMessage(MM.deserialize(fullRules), 360)))
+                        .build())
+                .type(DialogType.notice(ActionButton.builder(MM.deserialize("<#FACC15>Назад к тесту")).width(200)
+                        .action(DialogAction.customClick((view, aud) -> showRules(who, done, afterMistake), ONCE)).build())));
+        who.showDialog(d);
+    }
+
+    /** RULES.md → dialog text: «## раздел» = yellow heading, «- 1.1. пункт» = numbered line, **жирный**, `команда`. */
+    static String markdown(File file) {
+        List<String> lines;
+        try {
+            lines = java.nio.file.Files.readAllLines(file.toPath(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException e) {
+            return "<gray>Подробные правила — на сайте и в Discord.";
+        }
+        StringBuilder out = new StringBuilder();
+        for (String raw : lines) {
+            String line = raw.strip();
+            if (line.isEmpty() || line.startsWith("# ")) continue;
+            line = inline(line.replace("<", "‹"));
+            if (line.startsWith("## ")) {
+                out.append(out.isEmpty() ? "" : "\n").append("<#FACC15><bold>").append(line.substring(3)).append("</bold></#FACC15>\n");
+            } else if (line.startsWith("- ")) {
+                String item = line.substring(2);
+                int sp = item.indexOf(' ');
+                if (sp > 0 && item.substring(0, sp).matches("[0-9.]+")) {
+                    out.append("<#FACC15>").append(item, 0, sp).append("</#FACC15> <white>").append(item.substring(sp + 1)).append("</white>\n");
+                } else {
+                    out.append("<white>• ").append(item).append("</white>\n");
+                }
+            } else {
+                out.append("<gray>").append(line).append("</gray>\n");
+            }
+        }
+        return out.toString().strip();
+    }
+
+    private static String inline(String s) {
+        s = s.replaceAll("\\*\\*(.+?)\\*\\*", "<bold>$1</bold>");
+        return s.replaceAll("`(.+?)`", "<#93C5FD>$1</#93C5FD>");
     }
 
     private int count() {
