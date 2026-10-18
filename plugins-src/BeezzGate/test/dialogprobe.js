@@ -17,7 +17,7 @@ bot.once("spawn", () => { spawned = true; });
 bot.on("kicked", (r) => console.log("  kicked:", JSON.stringify(r).slice(0, 160)));
 setTimeout(() => {
   check("quiz window arrives during loading (configuration phase)", dialog && dialog.state === "configuration");
-  check("window shows the first question", dialog && /Вопрос 1 из/.test(dialog.text) && /Правила BeezzLand/.test(dialog.text));
+  check("first window shows the rules before the questions", dialog && /Прочитай правила/.test(dialog.text) && /начать тест/.test(dialog.text));
   check("player is not in the world while the quiz is open", !spawned);
   process.exit(0);
 }, 12000);

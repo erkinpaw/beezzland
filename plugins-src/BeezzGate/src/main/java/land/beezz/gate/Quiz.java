@@ -48,7 +48,7 @@ final class Quiz {
     /** Runs the whole quiz; completes with true once every question is answered right in one go. */
     CompletableFuture<Boolean> run(Audience who) {
         CompletableFuture<Boolean> done = new CompletableFuture<>();
-        ask(who, 0, done);
+        showRules(who, done, false); // rules first, then the questions about them
         return done;
     }
 
@@ -75,20 +75,25 @@ final class Quiz {
         return ActionButton.builder(MM.deserialize(label)).width(120)
                 .action(DialogAction.customClick((view, aud) -> {
                     if (right) ask(who, i + 1, done);
-                    else showRules(who, done);
+                    else showRules(who, done, true);
                 }, ONCE))
                 .build();
     }
 
-    private void showRules(Audience who, CompletableFuture<Boolean> done) {
-        Component body = MM.deserialize("<#F87171>Ответ неверный.</#F87171> <gray>Прочитай правила и пройди тест заново.</gray>\n\n<white>"
-                + rules.replace("\n", "\n\n"));
+    /** The rules screen: first thing a new player sees, and again after a wrong answer. */
+    private void showRules(Audience who, CompletableFuture<Boolean> done, boolean afterMistake) {
+        String head = afterMistake
+                ? "<#F87171>Ответ неверный.</#F87171> <gray>Прочитай правила ещё раз и пройди тест заново.</gray>"
+                : "<gray>Добро пожаловать! Прочитай правила — после них будет короткий тест из "
+                  + questions.size() + " вопросов.</gray>";
+        String button = afterMistake ? "<#FACC15>Прочитал, пройти тест заново" : "<#FACC15>Прочитал, начать тест";
+        Component body = MM.deserialize(head + "\n\n<white>" + rules.replace("\n", "\n\n"));
         Dialog d = Dialog.create(b -> b.empty()
                 .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Правила BeezzLand</bold>"))
                         .canCloseWithEscape(false)
                         .body(List.of(DialogBody.plainMessage(body, 300)))
                         .build())
-                .type(DialogType.notice(ActionButton.builder(MM.deserialize("<#FACC15>Прочитал, пройти тест заново")).width(240)
+                .type(DialogType.notice(ActionButton.builder(MM.deserialize(button)).width(240)
                         .action(DialogAction.customClick((view, aud) -> ask(who, 0, done), ONCE)).build())));
         who.showDialog(d);
     }
