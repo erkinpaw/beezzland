@@ -1,0 +1,5 @@
+# Регистрация в окне: адрес API BeezzAuth на прокси (Velocity, в его config.yml — gate: true).
+# Пусто — окна регистрации нет (тогда BeezzAuth сам выкидывает новичков с кодом).
+auth-api: ""
+# Ключ из plugins/beezzauth/api-secret.txt на прокси.
+auth-secret: ""

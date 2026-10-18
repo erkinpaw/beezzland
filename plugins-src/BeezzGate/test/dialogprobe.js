@@ -1,5 +1,5 @@
-// Checks that a new player gets the quiz window on the loading screen and is NOT let into the world
-// without answering. (mineflayer can receive dialogs but not click them: clicks are checked by hand.)
+// Checks that a new player first gets the registration window (code + «Открыть …» link buttons) on the
+// loading screen and is NOT let into the world. With REG=0 (no auth-api) the first window is the rules. (mineflayer can receive dialogs but not click them: clicks are checked by hand.)
 // usage: node dialogprobe.js [host] [port]
 const loadtest = process.env.LOADTEST || require("path").join(__dirname, "../../../loadtest/");
 const mineflayer = require(loadtest + "node_modules/mineflayer");
@@ -17,7 +17,12 @@ bot.once("spawn", () => { spawned = true; });
 bot.on("kicked", (r) => console.log("  kicked:", JSON.stringify(r).slice(0, 160)));
 setTimeout(() => {
   check("quiz window arrives during loading (configuration phase)", dialog && dialog.state === "configuration");
-  check("first window shows the rules before the questions", dialog && /Прочитай правила/.test(dialog.text) && /начать тест/.test(dialog.text));
-  check("player is not in the world while the quiz is open", !spawned);
+  if (process.env.REG === "0") {
+    check("first window shows the rules before the questions", dialog && /Прочитай правила/.test(dialog.text) && /начать тест/.test(dialog.text));
+  } else {
+    check("first window is registration with a 6-digit code", dialog && /Твой код/.test(dialog.text) && /\d{6}/.test(dialog.text));
+    check("it has a button that opens the bot's link", dialog && /Открыть/.test(dialog.text) && /https:\/\//.test(dialog.text));
+  }
+  check("player is not in the world while the window is open", !spawned);
   process.exit(0);
 }, 12000);
