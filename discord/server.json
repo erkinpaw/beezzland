@@ -1,51 +1,148 @@
 {
   "roles": [
-    {"name": "Владелец", "color": "#FACC15", "hoist": true, "staff": true},
-    {"name": "Админ", "color": "#F87171", "hoist": true, "staff": true},
-    {"name": "Модер", "color": "#60A5FA", "hoist": true, "staff": true},
-    {"name": "Хелпер", "color": "#34D399", "hoist": true, "staff": true},
-    {"name": "Игрок", "color": "#E7EEFB", "hoist": false}
+    {
+      "name": "Владелец",
+      "color": "#FACC15",
+      "hoist": true,
+      "staff": true
+    },
+    {
+      "name": "Админ",
+      "color": "#F87171",
+      "hoist": true,
+      "staff": true,
+      "permissions": [
+        "timeout",
+        "manage_messages",
+        "kick",
+        "ban",
+        "manage_channels",
+        "manage_roles",
+        "manage_nicknames",
+        "audit_log",
+        "mute_members",
+        "move_members"
+      ]
+    },
+    {
+      "name": "Модер",
+      "color": "#60A5FA",
+      "hoist": true,
+      "staff": true,
+      "permissions": [
+        "timeout",
+        "manage_messages",
+        "kick",
+        "manage_nicknames",
+        "audit_log",
+        "mute_members",
+        "move_members"
+      ]
+    },
+    {
+      "name": "Хелпер",
+      "color": "#34D399",
+      "hoist": true,
+      "staff": true,
+      "permissions": [
+        "timeout",
+        "manage_messages"
+      ]
+    },
+    {
+      "name": "Игрок",
+      "color": "#E7EEFB",
+      "hoist": false
+    }
   ],
   "categories": [
     {
       "name": "📢 Информация",
       "channels": [
-        {"name": "новости", "topic": "Новости BeezzLand: обновления, открытие миров, вайпы", "readonly": true},
-        {"name": "правила", "topic": "Правила сервера", "readonly": true},
-        {"name": "ивенты", "topic": "Ивенты и розыгрыши", "readonly": true}
+        {
+          "name": "новости",
+          "topic": "Новости BeezzLand: обновления, открытие миров, вайпы",
+          "readonly": true
+        },
+        {
+          "name": "правила",
+          "topic": "Правила сервера",
+          "readonly": true
+        },
+        {
+          "name": "ивенты",
+          "topic": "Ивенты и розыгрыши",
+          "readonly": true
+        }
       ]
     },
     {
       "name": "💬 Общение",
       "channels": [
-        {"name": "общий", "topic": "Общаемся обо всём"},
-        {"name": "скриншоты", "topic": "Твои постройки и находки"},
-        {"name": "биржа", "topic": "Торговля и заказы ресурсов за ары"},
-        {"name": "идеи", "topic": "Предложения для сервера"}
+        {
+          "name": "общий",
+          "topic": "Общаемся обо всём"
+        },
+        {
+          "name": "скриншоты",
+          "topic": "Твои постройки и находки"
+        },
+        {
+          "name": "биржа",
+          "topic": "Торговля и заказы ресурсов за ары"
+        },
+        {
+          "name": "идеи",
+          "topic": "Предложения для сервера"
+        }
       ]
     },
     {
       "name": "🛠 Помощь",
       "channels": [
-        {"name": "вопросы", "topic": "Не получается зайти или привязать аккаунт? Спрашивай"},
-        {"name": "баги", "topic": "Нашёл баг — опиши, как повторить"},
-        {"name": "жалобы", "topic": "Жалобы на игроков: ник, что случилось, скриншоты"}
+        {
+          "name": "вопросы",
+          "topic": "Не получается зайти или привязать аккаунт? Спрашивай"
+        },
+        {
+          "name": "баги",
+          "topic": "Нашёл баг — опиши, как повторить"
+        },
+        {
+          "name": "жалобы",
+          "topic": "Жалобы на игроков: ник, что случилось, скриншоты"
+        }
       ]
     },
     {
       "name": "🔊 Голос",
       "channels": [
-        {"name": "Общий", "voice": true},
-        {"name": "Игра 1", "voice": true},
-        {"name": "Игра 2", "voice": true}
+        {
+          "name": "Общий",
+          "voice": true
+        },
+        {
+          "name": "Игра 1",
+          "voice": true
+        },
+        {
+          "name": "Игра 2",
+          "voice": true
+        }
       ]
     },
     {
       "name": "🛡 Модерация",
       "staff_only": true,
       "channels": [
-        {"name": "модерация", "topic": "Только для команды"},
-        {"name": "отчёты", "topic": "Ежедневные отчёты сервера"}
+        {
+          "name": "модерация",
+          "topic": "Только для команды"
+        },
+        {
+          "name": "отчёты",
+          "topic": "Ежедневные отчёты сервера"
+        }
       ]
     }
   ]

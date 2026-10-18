@@ -14,6 +14,23 @@ import argparse, json, os, sys, time, urllib.error, urllib.request
 API = os.environ.get("DISCORD_API", "https://discord.com/api/v10")
 VIEW, SEND, CONNECT = 1 << 10, 1 << 11, 1 << 20
 TEXT, VOICE, CATEGORY = 0, 2, 4
+# names used in server.json → Discord permission bits (and the name in the Russian Discord UI)
+PERMS = {
+    "kick": (1 << 1, "Выгонять участников"),
+    "ban": (1 << 2, "Банить участников"),
+    "manage_channels": (1 << 4, "Управлять каналами"),
+    "audit_log": (1 << 7, "Просматривать журнал аудита"),
+    "manage_messages": (1 << 13, "Управлять сообщениями"),
+    "mute_members": (1 << 22, "Отключать участникам микрофон"),
+    "move_members": (1 << 24, "Перемещать участников"),
+    "manage_nicknames": (1 << 27, "Управлять никнеймами"),
+    "manage_roles": (1 << 28, "Управлять ролями"),
+    "timeout": (1 << 40, "Управлять участниками (тайм-аут)"),
+}
+
+
+class Forbidden(Exception):
+    pass
 
 
 class Discord:
@@ -38,6 +55,8 @@ class Discord:
                 if e.code == 429:  # rate limited: wait as told and retry
                     time.sleep(float(json.loads(e.read() or b"{}").get("retry_after", 1)) + 0.2)
                     continue
+                if e.code == 403:
+                    raise Forbidden(f"{method} {path}")
                 raise SystemExit(f"Discord {method} {path}: HTTP {e.code} {e.read()[:200]!r}")
         raise SystemExit(f"Discord {method} {path}: still rate limited")
 
@@ -47,6 +66,8 @@ def main():
     ap.add_argument("guild")
     ap.add_argument("--spec", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "discord", "server.json"))
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--role-permissions", action="store_true",
+                    help="also give staff roles their moderation rights (the bot must have those rights itself)")
     a = ap.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
     token = os.environ.get("DISCORD_TOKEN", "")
@@ -68,10 +89,23 @@ def main():
                     "mentionable": False}
             # no permissions on created roles: Discord refuses (403) to let a bot grant rights it doesn't have,
             # and the server owner has every right anyway; give mods their rights in Discord's role settings
-            role = d.call("POST", f"/guilds/{g}/roles", body)
+            try:
+                role = d.call("POST", f"/guilds/{g}/roles", body)
+            except Forbidden:
+                raise SystemExit("Discord не дал создать роль: у бота должна быть «Управлять ролями».")
             print(f"  + {r['name']}")
         if r.get("staff"):
             staff_ids.append(role["id"])
+        if a.role_permissions and r.get("permissions"):
+            bits = sum(PERMS[p][0] for p in r["permissions"])
+            try:
+                d.call("PATCH", f"/guilds/{g}/roles/{role['id']}", {"permissions": str(bits)})
+                print(f"    права: {', '.join(PERMS[p][1] for p in r['permissions'])}")
+            except Forbidden:
+                need = sorted({PERMS[p][1] for x in spec["roles"] for p in x.get("permissions", [])})
+                raise SystemExit("Discord не дал выдать права: бот может раздавать только те права, что есть у него самого.\n"
+                                 "Временно включи роли бота (BeezzLand) в Настройки сервера → Роли:\n  - "
+                                 + "\n  - ".join(need) + "\nи запусти ещё раз. Потом эти права у бота можно снять.")
 
     print("Channels")
     chans = {(c["name"], c.get("parent_id")): c for c in d.call("GET", f"/guilds/{g}/channels")} if not a.dry_run or token else {}
