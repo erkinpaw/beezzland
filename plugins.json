@@ -91,5 +91,11 @@
       "file": "custom-plugins/BeezzWorlds-1.0.0.jar",
       "why": "миры: открытие командой, мир ферм + свой незер, портал из пчелиных сот (исходники: plugins-src/BeezzWorlds)"
     }
+  ],
+  "custom_proxy": [
+    {
+      "file": "custom-plugins/proxy/BeezzAuth-1.0.0.jar",
+      "why": "вход без паролей через Telegram / ВК (исходники: plugins-src/BeezzAuth)"
+    }
   ]
 }

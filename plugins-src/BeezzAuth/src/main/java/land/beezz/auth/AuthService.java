@@ -105,7 +105,8 @@ public final class AuthService implements Provider.Inbox {
             return new Verdict(MM.deserialize(HEAD + "<#F87171>Вход отклонён.</#F87171>\n\n"
                     + "<gray>Если это был не ты — всё в порядке, никто не зайдёт под твоим ником."));
         } catch (TimeoutException e) {
-            // keep the request: a late «Это я» still opens the next login from this IP
+            // the game stopped waiting; keep the request so a late «Это я» opens the next login from this IP
+            pending.answer().completeExceptionally(e);
             return new Verdict(MM.deserialize(HEAD + "<white>Подтверди вход в боте</white> <gray>("
                     + String.join(", ", reachable.stream().map(Provider::title).toList()) + ")</gray>\n\n"
                     + "<gray>Нажми <#34D399>«Это я»</#34D399> и зайди снова — пустим сразу."));

@@ -76,7 +76,8 @@ echo "Velocity $VEL_VER"
 log "Plugins"
 python3 "$BASE/scripts/fetch_plugins.py" backend "$BASE/survival/plugins"
 python3 "$BASE/scripts/fetch_plugins.py" proxy "$BASE/proxy/plugins"
-cp "$SRC"/custom-plugins/*.jar "$BASE/survival/plugins/"   # our own plugins (WebTrade)
+cp "$SRC"/custom-plugins/*.jar "$BASE/survival/plugins/"   # our own plugins (WebTrade, BeezzWorlds)
+cp "$SRC"/custom-plugins/proxy/*.jar "$BASE/proxy/plugins/"  # our proxy plugins (BeezzAuth)
 python3 "$SRC/scripts/make_logo.py" "$BASE/assets" 2>/dev/null || true   # needs python3-pil; optional
 cp "$SRC/site/assets/server-icon.png" "$BASE/proxy/server-icon.png"
 chown -R minecraft:minecraft "$BASE"
