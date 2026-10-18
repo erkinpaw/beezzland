@@ -1,0 +1,16 @@
+[Unit]
+Description=Minecraft Velocity proxy
+After=network-online.target mc-survival.service
+
+[Service]
+User=minecraft
+WorkingDirectory=/opt/mc/proxy
+ExecStart=/usr/bin/java -Xms@MEM@ -Xmx@MEM@ -XX:+UseG1GC -XX:G1HeapRegionSize=4M -XX:+UnlockExperimentalVMOptions \
+  -XX:+ParallelRefProcEnabled -XX:+AlwaysPreTouch -XX:MaxInlineLevel=15 -jar velocity.jar
+KillSignal=SIGTERM
+TimeoutStopSec=30
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

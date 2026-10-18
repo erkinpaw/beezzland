@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Калькулятор биржи — BeezzLand</title>
+  <meta name="description" content="Посчитай стоимость контейнера на бирже BeezzLand в арах: выбери ресурсы или загрузи схематику.">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="map-page">
+<div class="hive"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
+    <nav>
+      <a class="hide-sm" href="/">Главная</a>
+      <a href="map.html">Карта</a>
+      <a class="on" href="calculator.html">Калькулятор</a>
+    </nav>
+  </div>
+</header>
+<div class="map-frame calc-frame" data-frame>
+  <iframe src="/webtrade/calculator.html" title="Калькулятор контейнера WebTrade" data-calc></iframe>
+  <div class="fallback"><div><h2>Калькулятор обновляется 🐝</h2><p>Цены выгружаются с сервера. Загляни через минуту.</p></div></div>
+</div>
+<script>
+  // Dress the plugin's calculator in BeezzLand colors without changing the plugin itself.
+  const frame = document.querySelector("[data-calc]");
+  frame.addEventListener("load", () => {
+    const doc = frame.contentDocument;
+    if (!doc || !doc.querySelector(".app")) {
+      document.querySelector("[data-frame]").classList.add("down");
+      return;
+    }
+    doc.documentElement.dataset.theme = "dark";
+    for (const href of [
+      "https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic",
+      "/webtrade-theme.css",
+    ]) {
+      const link = doc.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      doc.body.append(link); // after the plugin's own <style>, so our tokens win
+    }
+  });
+</script>
+</body>
+</html>

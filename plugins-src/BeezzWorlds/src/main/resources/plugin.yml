@@ -1,0 +1,17 @@
+name: BeezzWorlds
+version: '${version}'
+main: land.beezz.worlds.BeezzWorlds
+api-version: '26.3'
+description: Миры BeezzLand — открытие по неделям, мир ферм и портал из пчелиных сот
+load: POSTWORLD
+
+commands:
+  beezz:
+    description: Управление мирами BeezzLand
+    usage: /beezz <open|close|status> [nether|farm|end]
+    permission: beezz.admin
+
+permissions:
+  beezz.admin:
+    description: Открывать и закрывать миры
+    default: op

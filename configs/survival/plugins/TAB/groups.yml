@@ -1,0 +1,7 @@
+# Prefixes come from LuckPerms groups (scripts/init_groups.txt), so every rank is edited in one place.
+_DEFAULT_:
+  tabprefix: "%luckperms-prefix%"
+  tagprefix: "%luckperms-prefix%"
+  customtabname: "%player%"
+  tabsuffix: "%luckperms-suffix%"
+  tagsuffix: "%luckperms-suffix%"

@@ -1,0 +1,95 @@
+{
+  "minecraft": "26.3",
+  "backend": [
+    {
+      "slug": "luckperms",
+      "why": "права и группы (MariaDB)"
+    },
+    {
+      "slug": "vaultunlocked",
+      "why": "экономика/права API для других плагинов"
+    },
+    {
+      "slug": "placeholderapi",
+      "why": "плейсхолдеры для TAB, чата, сайта"
+    },
+    {
+      "slug": "worldedit",
+      "why": "редактирование мира для админов"
+    },
+    {
+      "slug": "worldguard",
+      "why": "защита спавна и регионов"
+    },
+    {
+      "slug": "chunky",
+      "why": "предгенерация мира"
+    },
+    {
+      "slug": "pl3xmap",
+      "why": "2D-карта мира для сайта (легче 3D-карты BlueMap по памяти и CPU)"
+    },
+    {
+      "slug": "plan",
+      "why": "статистика игроков и сервера"
+    },
+    {
+      "slug": "tab-was-taken",
+      "why": "таб-лист и неймтеги"
+    },
+    {
+      "slug": "skinsrestorer",
+      "why": "скины для игроков без лицензии"
+    },
+    {
+      "slug": "carbon",
+      "why": "чат: префиксы рангов, локальный (100 блоков) и глобальный (!) каналы, ЛС"
+    },
+    {
+      "slug": "simple-voice-chat",
+      "why": "голосовой чат рядом с игроком (нужен мод у игрока, UDP 24454)"
+    }
+  ],
+  "proxy": [
+    {
+      "slug": "luckperms",
+      "why": "права на уровне прокси (та же база)"
+    },
+    {
+      "slug": "libertybans",
+      "why": "баны, временные баны, муты, кики, предупреждения (MariaDB)"
+    },
+    {
+      "slug": "viaversion",
+      "why": "вход с других версий клиента"
+    },
+    {
+      "slug": "viabackwards",
+      "why": "вход со старых версий клиента"
+    }
+  ],
+  "later": [
+    {
+      "slug": "coreprotect",
+      "why": "лог блоков и откат гриферства; 24.1 не запускается на 26.3, ждём обновления"
+    },
+    {
+      "slug": "discordsrv",
+      "why": "мост чата с Discord (этап 5, нужен токен бота)"
+    },
+    {
+      "slug": "grimac",
+      "why": "античит (пока нет сборки под 26.3)"
+    }
+  ],
+  "custom": [
+    {
+      "file": "custom-plugins/WebTrade-1.0-SNAPSHOT.jar",
+      "why": "наша биржа ресурсов (github.com/erkinpaw/web-trade)"
+    },
+    {
+      "file": "custom-plugins/BeezzWorlds-1.0.0.jar",
+      "why": "миры: открытие командой, мир ферм + свой незер, портал из пчелиных сот (исходники: plugins-src/BeezzWorlds)"
+    }
+  ]
+}

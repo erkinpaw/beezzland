@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BeezzLand — ванильное выживание Minecraft</title>
+  <meta name="description" content="BeezzLand — честное ванильное выживание Minecraft 26.3 без телепортов и паролей. Вход через ВК, Telegram или Discord.">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="hive"></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
+    <nav>
+      <a class="hide-sm" href="#about">О сервере</a>
+      <a class="hide-sm" href="#join">Как зайти</a>
+      <a class="hide-sm" href="#rules">Правила</a>
+      <a href="map.html">Карта</a>
+      <a href="calculator.html">Калькулятор</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Minecraft <span data-version>26.3</span> · ванилла</div>
+      <h1><span class="honey">Beezz</span><span class="sky">Land</span></h1>
+      <p class="lead">Честное выживание без телепортов, варпов и паролей. Строй улей, торгуй с соседями и исследуй мир вместе с нами.</p>
+      <div class="join">
+        <button class="ip" data-copy title="Нажми, чтобы скопировать">
+          <span data-ip>localhost</span><small>копировать</small>
+        </button>
+        <a class="btn" href="#join">Как начать играть</a>
+      </div>
+    </div>
+    <div class="hero-art"><img class="px" src="assets/bee.svg" alt="Пчёлка BeezzLand"></div>
+  </div>
+
+  <div class="status" aria-live="polite">
+    <div><div class="k">Сервер</div><div class="v"><i class="dot" data-dot></i><span data-state>проверяем…</span></div></div>
+    <div><div class="k">Игроков онлайн</div><div class="v"><span data-players>—</span></div></div>
+    <div><div class="k">Версия</div><div class="v"><span data-version>26.3</span></div></div>
+    <div><div class="k">Пинг до сервера</div><div class="v"><span data-ping>—</span></div></div>
+  </div>
+
+  <section id="about">
+    <h2>Почему BeezzLand</h2>
+    <p class="sub">Мы оставили Minecraft таким, каким он задуман: всё добывается руками, а путь до друга — это путешествие.</p>
+    <div class="grid">
+      <div class="card"><div class="ico">⛏️</div><h3>Чистая ванилла</h3><p>Без /home, /tp и варпов. Строй порталы, прокладывай дороги, рискуй в пути.</p></div>
+      <div class="card"><div class="ico">🔐</div><h3>Вход без паролей</h3><p>Никаких /reg. Привяжи ВК, Telegram или Discord — и подтверждай вход одной кнопкой.</p></div>
+      <div class="card"><div class="ico">🗺️</div><h3>Живая карта мира</h3><p>3D-карта прямо в браузере: найди соседей, посмотри на постройки и выбери место для улья.</p></div>
+      <div class="card"><div class="ico">🛡️</div><h3>Защита от гриферов</h3><p>Логи и откаты построек, античит и живая модерация. Ломать чужое — не выйдет.</p></div>
+      <div class="card"><div class="ico">💎</div><h3>Биржа ресурсов</h3><p>Заказывай ресурсы за ары или зарабатывай, сдавая добытое. Посчитай заказ в <a href="calculator.html">калькуляторе</a>.</p></div>
+      <div class="card"><div class="ico">🐝</div><h3>Своё сообщество</h3><p>Ивенты по выходным, новости и розыгрыши в наших соцсетях. Заходи знакомиться.</p></div>
+    </div>
+  </section>
+
+  <section id="join">
+    <h2>Как зайти</h2>
+    <p class="sub">Подойдёт любая версия Minecraft от 1.21 до <span data-version>26.3</span>, лицензия не обязательна.</p>
+    <ol class="steps">
+      <li><b>Добавь сервер</b><span>Мультиплеер → Добавить сервер → адрес <code data-ip>localhost</code></span></li>
+      <li><b>Привяжи аккаунт</b><span>При первом входе бот пришлёт код. Отправь его в ВК, Telegram или Discord.</span></li>
+      <li><b>Играй</b><span>В следующий раз заходишь сразу. С нового устройства — подтверждаешь кнопкой.</span></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="map-teaser">
+      <div><h2>Карта мира</h2><p>Посмотри, что уже построили игроки, прямо в браузере.</p></div>
+      <a class="btn" href="map.html">Открыть карту</a>
+    </div>
+  </section>
+
+  <section id="rules">
+    <h2>Правила</h2>
+    <p class="sub">Коротко. Полная версия — в нашем Discord и группе ВК.</p>
+    <ul class="rules">
+      <li>Не ломай и не воруй чужое — всё откатывается, а ты отправляешься в бан</li>
+      <li>Никаких читов, x-ray и модов на преимущество</li>
+      <li>Уважай других игроков в чате, без оскорблений и рекламы</li>
+      <li>Лаг-машины и огромные фермы, роняющие сервер, запрещены</li>
+      <li>Строй подальше от чужих домов — минимум 100 блоков</li>
+      <li>Нашёл баг — сообщи администрации, а не используй</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span data-year></span> BeezzLand. Не связан с Mojang или Microsoft.</span>
+    <div class="socials" data-socials></div>
+  </div>
+</footer>
+
+<div class="toast" data-toast>IP скопирован</div>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

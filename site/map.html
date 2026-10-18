@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Карта мира — BeezzLand</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="map-page">
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
+    <nav>
+      <a href="/">Главная</a>
+      <a class="on" href="map.html">Карта</a>
+      <a href="calculator.html">Калькулятор</a>
+      <a class="hide-sm" href="/map/" target="_blank" rel="noopener">На весь экран ↗</a>
+    </nav>
+  </div>
+</header>
+<div class="map-frame" data-frame>
+  <iframe src="/map/" title="Карта мира BeezzLand" allowfullscreen></iframe>
+  <div class="fallback"><div><h2>Карта спит 🐝</h2><p>Сервер карты сейчас недоступен. Загляни чуть позже.</p></div></div>
+</div>
+<script>
+  fetch("/map/tiles/settings.json", { cache: "no-store" })
+    .then(r => { if (!r.ok) throw 0; })
+    .catch(() => document.querySelector("[data-frame]").classList.add("down"));
+</script>
+</body>
+</html>

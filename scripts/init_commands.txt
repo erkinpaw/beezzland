@@ -1,0 +1,42 @@
+# One-time console commands for BeezzLand (ranks, game rules), one per line.
+#   setup.sh runs them automatically; to re-run by hand paste them into the server console.
+# Prefix colors: owner = honey, admin = red, moder = sky blue, helper = green, players = white.
+lp creategroup owner
+lp creategroup admin
+lp creategroup moder
+lp creategroup helper
+lp group owner setweight 100
+lp group admin setweight 90
+lp group moder setweight 70
+lp group helper setweight 50
+lp group owner parent add admin
+lp group admin parent add moder
+lp group moder parent add helper
+lp group owner meta setprefix 100 "&8[&#FACC15Владелец&8] &#FDE047"
+lp group admin meta setprefix 90 "&8[&#F87171Админ&8] &f"
+lp group moder meta setprefix 70 "&8[&#60A5FAМодер&8] &f"
+lp group helper meta setprefix 50 "&8[&#34D399Хелпер&8] &f"
+lp group default meta setprefix 1 "&f"
+lp group owner permission set * true
+lp group admin permission set worldedit.* true
+lp group admin permission set worldguard.* true
+lp group admin permission set chunky.* true
+lp group admin permission set bluemap.* true
+lp group admin permission set plan.* true
+lp group admin permission set tab.* true
+lp group moder permission set libertybans.ban.* true
+lp group moder permission set libertybans.mute.* true
+lp group moder permission set libertybans.warn.* true
+lp group moder permission set libertybans.kick.* true
+lp group moder permission set libertybans.list.* true
+lp group moder permission set coreprotect.* true
+lp group helper permission set libertybans.mute.do.target.uuid true
+lp group helper permission set libertybans.mute.do.time.duration.1h true
+lp group helper permission set libertybans.warn.do.target.uuid true
+lp group helper permission set libertybans.kick.do.target.uuid true
+lp group default permission set bluemap.status true
+lp group default permission set carbon.channel.local.see true
+lp group default permission set carbon.channel.local.speak true
+lp group default permission set carbon.channel.global.see true
+lp group default permission set carbon.channel.global.speak true
+gamerule players_sleeping_percentage 50

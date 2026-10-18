@@ -1,0 +1,5 @@
+# Everything here runs on a Linux VPS: keep LF line endings in the repo and in checkouts.
+* text=auto eol=lf
+*.jar binary
+*.png binary
+*.bat text eol=crlf

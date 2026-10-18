@@ -1,0 +1,8 @@
+# build outputs and local tooling
+plugins-src/*/build/
+plugins-src/*/.gradle/
+loadtest/node_modules/
+__pycache__/
+*.pyc
+# local test artifacts
+loadtest/*.log
