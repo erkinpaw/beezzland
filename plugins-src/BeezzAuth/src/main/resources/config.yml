@@ -9,6 +9,9 @@ confirm-timeout-seconds: 25
 link-code-minutes: 10
 # Если «Это я» нажали уже после того, как игра перестала ждать, вход с этого IP открыт ещё столько минут.
 late-approve-minutes: 5
+# Игроков с телефона/консоли (Bedrock через Geyser + Floodgate) уже проверил Xbox Live —
+# пускать их без привязки к ботам. Проверяет сам Floodgate, ник подделать нельзя.
+trust-floodgate: true
 
 telegram:
   enabled: false

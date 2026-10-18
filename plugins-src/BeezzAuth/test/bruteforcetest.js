@@ -27,7 +27,7 @@ function kickCode(name) {
 }
 
 (async () => {
-  const ATTACKER = 9001, OWNER = 9002;
+  const ATTACKER = 9100 + Math.floor(Math.random() * 800), OWNER = 9002;
   const code = await kickCode("Victim" + (Date.now() % 10000));
   check("victim got a code", !!code);
   for (let i = 0; i < 5; i++) {

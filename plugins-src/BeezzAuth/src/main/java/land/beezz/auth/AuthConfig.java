@@ -18,6 +18,8 @@ public final class AuthConfig {
     public final Duration confirmTimeout;
     public final Duration linkCodeLife;
     public final Duration lateApprove;
+    /** Bedrock players via Floodgate are already authenticated by Xbox Live: let them in without linking */
+    public final boolean trustFloodgate;
     public final Section telegram;
     public final Section vk;
     public final Section discord;
@@ -30,6 +32,7 @@ public final class AuthConfig {
         confirmTimeout = Duration.ofSeconds(num(m, "confirm-timeout-seconds", 25));
         linkCodeLife = Duration.ofMinutes(num(m, "link-code-minutes", 10));
         lateApprove = Duration.ofMinutes(num(m, "late-approve-minutes", 5));
+        trustFloodgate = !Boolean.FALSE.equals(m.get("trust-floodgate"));
         telegram = section(m, "telegram", "https://api.telegram.org");
         vk = section(m, "vk", "https://api.vk.com/method");
         discord = section(m, "discord", "https://discord.com/api/v10");

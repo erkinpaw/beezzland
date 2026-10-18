@@ -7,6 +7,7 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
@@ -20,13 +21,15 @@ import java.nio.file.Path;
 
 @Plugin(id = "beezzauth", name = "BeezzAuth", version = "1.0.0",
         description = "Вход без паролей: привязка к ВК / Telegram / Discord и подтверждение входа кнопкой",
-        authors = {"BeezzLand"})
+        authors = {"BeezzLand"},
+        dependencies = {@Dependency(id = "floodgate", optional = true)})
 public final class BeezzAuth {
 
     private final ProxyServer proxy;
     private final Logger log;
     private final Path dir;
     private AuthService auth;
+    private AuthConfig cfg;
 
     @Inject
     public BeezzAuth(ProxyServer proxy, Logger log, @DataDirectory Path dir) {
@@ -37,7 +40,7 @@ public final class BeezzAuth {
 
     @Subscribe
     public void onInit(ProxyInitializeEvent e) throws Exception {
-        AuthConfig cfg = AuthConfig.load(dir);
+        cfg = AuthConfig.load(dir);
         Accounts accounts = new Accounts(dir);
         accounts.load();
         auth = new AuthService(cfg, accounts, log);
@@ -51,6 +54,9 @@ public final class BeezzAuth {
         if (!auth.providers().iterator().hasNext()) {
             log.warn("No bots enabled in plugins/beezzauth/config.yml — new players can only be linked with /bauth link");
         }
+        log.info("Floodgate {}", Floodgate.present()
+                ? (cfg.trustFloodgate ? "found: Bedrock players skip linking" : "found, but trust-floodgate is off")
+                : "not installed: only Java players");
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("bauth").plugin(this).build(),
                 new AuthCommand(auth, accounts));
@@ -67,6 +73,10 @@ public final class BeezzAuth {
     @Subscribe
     public EventTask onLogin(LoginEvent e) {
         if (!e.getResult().isAllowed()) {
+            return null;
+        }
+        if (cfg.trustFloodgate && Floodgate.isBedrockPlayer(e.getPlayer().getUniqueId())) {
+            log.info("{} is a Bedrock player verified by Floodgate (Xbox Live), no link needed", e.getPlayer().getUsername());
             return null;
         }
         String name = e.getPlayer().getUsername();
