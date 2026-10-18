@@ -3,7 +3,7 @@
 # plugins, systemd services, daily backups, firewall, website behind nginx (+HTTPS).
 #
 # Run as root from the mc-server folder:   sudo ./setup.sh
-# With a domain (DNS A records for it and www. must already point here):
+# With a domain (its DNS A record must already point here; www. is added if it exists too):
 #   sudo DOMAIN=beezzland.ru EMAIL=you@example.com ./setup.sh
 # Phones/consoles too (Geyser + Floodgate, UDP 19132): add BEDROCK=1
 # Safe to re-run: existing worlds, secrets and database are kept.
@@ -148,8 +148,10 @@ sudo -u minecraft python3 "$BASE/scripts/rcon.py" "${LP_CMDS[@]}" "tab reload" >
 if [[ -n $DOMAIN && -n $EMAIL ]]; then
   log "HTTPS (Let's Encrypt)"
   apt-get install -yq certbot python3-certbot-nginx
-  certbot --nginx --non-interactive --agree-tos -m "$EMAIL" --redirect -d "$DOMAIN" -d "www.$DOMAIN" \
-    || echo "certbot failed: check that $DOMAIN and www.$DOMAIN point to this server, then re-run setup.sh"
+  NAMES=(-d "$DOMAIN")
+  if getent hosts "www.$DOMAIN" >/dev/null; then NAMES+=(-d "www.$DOMAIN"); fi  # www only if its DNS record exists
+  certbot --nginx --non-interactive --agree-tos -m "$EMAIL" --redirect "${NAMES[@]}" \
+    || echo "certbot failed: check that $DOMAIN points to this server (DNS A record), then re-run setup.sh"
 fi
 
 echo
