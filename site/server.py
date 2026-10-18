@@ -131,6 +131,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
+    ap.add_argument("--host", default="0.0.0.0", help="127.0.0.1 behind nginx")
     ap.add_argument("--port", type=int, default=8080)
     ap.add_argument("--mc", default="127.0.0.1:25565")
     ap.add_argument("--map", default="127.0.0.1:8100")
@@ -140,4 +141,4 @@ if __name__ == "__main__":
     MC = (a.mc.split(":")[0], int(a.mc.split(":")[1]))
     MAP = (a.map.split(":")[0], int(a.map.split(":")[1]))
     print(f"BeezzLand site: http://localhost:{a.port}  (minecraft {a.mc}, map {a.map})")
-    ThreadingHTTPServer(("0.0.0.0", a.port), Handler).serve_forever()
+    ThreadingHTTPServer((a.host, a.port), Handler).serve_forever()
