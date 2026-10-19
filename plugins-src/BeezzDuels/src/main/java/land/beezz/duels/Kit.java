@@ -1,26 +1,42 @@
 package land.beezz.duels;
 
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.potion.PotionType;
 
 import java.util.Arrays;
+import java.util.List;
 
 /** Duel kits: everyone gets exactly the same things, nothing from the survival inventory goes in or out. */
 enum Kit {
 
-    DIAMOND("алмазный", "Алмазный", "алмазная броня, меч, лук, щит, 2 золотых яблока"),
-    NETHERITE("незеритовый", "Незеритовый", "незерит с зачарованиями, тотем, 6 золотых яблок"),
-    ARCHER("лучник", "Лучник", "кожаная броня, лук и арбалет, 64 стрелы");
+    DIAMOND("diamond", "алмазный", "Алмазный", List.of(
+            "Алмазная броня и алмазный меч",
+            "5 золотых яблок",
+            "2 зелья скорости",
+            "2 зелья силы",
+            "8 зелий исцеления")),
+    IRON("iron", "железный", "Железный", List.of(
+            "Железная броня и железный меч",
+            "Удочка",
+            "Лук и 5 стрел",
+            "2 золотых яблока")),
+    ARCHER("archer", "лучник", "Лучник", List.of(
+            "Лук",
+            "64 стрелы",
+            "Без брони — кто точнее, тот и победил"));
 
-    private final String id, title, description;
+    private final String id, ru, title;
+    private final List<String> items;
 
-    Kit(String id, String title, String description) {
+    Kit(String id, String ru, String title, List<String> items) {
         this.id = id;
+        this.ru = ru;
         this.title = title;
-        this.description = description;
+        this.items = items;
     }
 
     String id() {
@@ -31,12 +47,17 @@ enum Kit {
         return title;
     }
 
+    /** What is inside, one line per item group: shown on hover in chat and on the site. */
+    List<String> items() {
+        return items;
+    }
+
     String description() {
-        return description;
+        return String.join(", ", items).toLowerCase();
     }
 
     static Kit byId(String s) {
-        return Arrays.stream(values()).filter(k -> k.id.equalsIgnoreCase(s) || k.name().equalsIgnoreCase(s)).findFirst().orElse(null);
+        return Arrays.stream(values()).filter(k -> k.id.equalsIgnoreCase(s) || k.ru.equalsIgnoreCase(s)).findFirst().orElse(null);
     }
 
     void give(Player p) {
@@ -44,45 +65,42 @@ enum Kit {
         inv.clear();
         switch (this) {
             case DIAMOND -> {
-                armor(inv, Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS, 0);
+                armor(inv, Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE, Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS);
                 inv.setItem(0, new ItemStack(Material.DIAMOND_SWORD));
-                inv.setItem(1, new ItemStack(Material.BOW));
-                inv.setItem(2, new ItemStack(Material.GOLDEN_APPLE, 2));
-                inv.setItem(3, new ItemStack(Material.COOKED_BEEF, 16));
-                inv.setItem(9, new ItemStack(Material.ARROW, 16));
-                inv.setItemInOffHand(new ItemStack(Material.SHIELD));
+                inv.setItem(1, new ItemStack(Material.GOLDEN_APPLE, 5));
+                inv.setItem(2, potion(PotionType.SWIFTNESS));
+                inv.setItem(3, potion(PotionType.SWIFTNESS));
+                inv.setItem(4, potion(PotionType.STRENGTH));
+                inv.setItem(5, potion(PotionType.STRENGTH));
+                for (int i = 0; i < 8; i++) inv.addItem(potion(PotionType.STRONG_HEALING)); // slots 6-8, then the inventory
             }
-            case NETHERITE -> {
-                armor(inv, Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE, Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS, 4);
-                inv.setItem(0, enchanted(Material.NETHERITE_SWORD, Enchantment.SHARPNESS, 5));
-                inv.setItem(1, enchanted(Material.NETHERITE_AXE, Enchantment.SHARPNESS, 3));
-                inv.setItem(2, new ItemStack(Material.GOLDEN_APPLE, 6));
-                inv.setItem(3, new ItemStack(Material.COOKED_BEEF, 16));
-                inv.setItem(8, new ItemStack(Material.TOTEM_OF_UNDYING));
-                inv.setItemInOffHand(new ItemStack(Material.SHIELD));
+            case IRON -> {
+                armor(inv, Material.IRON_HELMET, Material.IRON_CHESTPLATE, Material.IRON_LEGGINGS, Material.IRON_BOOTS);
+                inv.setItem(0, new ItemStack(Material.IRON_SWORD));
+                inv.setItem(1, new ItemStack(Material.FISHING_ROD));
+                inv.setItem(2, new ItemStack(Material.BOW));
+                inv.setItem(3, new ItemStack(Material.GOLDEN_APPLE, 2));
+                inv.setItem(9, new ItemStack(Material.ARROW, 5));
             }
             case ARCHER -> {
-                armor(inv, Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE, Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS, 2);
-                inv.setItem(0, enchanted(Material.BOW, Enchantment.POWER, 3));
-                inv.setItem(1, new ItemStack(Material.CROSSBOW));
-                inv.setItem(2, new ItemStack(Material.STONE_SWORD));
-                inv.setItem(3, new ItemStack(Material.GOLDEN_APPLE, 2));
-                inv.setItem(4, new ItemStack(Material.COOKED_BEEF, 16));
+                inv.setItem(0, new ItemStack(Material.BOW));
                 inv.setItem(9, new ItemStack(Material.ARROW, 64));
             }
         }
     }
 
-    private static void armor(PlayerInventory inv, Material h, Material c, Material l, Material b, int protection) {
-        inv.setHelmet(protection > 0 ? enchanted(h, Enchantment.PROTECTION, protection) : new ItemStack(h));
-        inv.setChestplate(protection > 0 ? enchanted(c, Enchantment.PROTECTION, protection) : new ItemStack(c));
-        inv.setLeggings(protection > 0 ? enchanted(l, Enchantment.PROTECTION, protection) : new ItemStack(l));
-        inv.setBoots(protection > 0 ? enchanted(b, Enchantment.PROTECTION, protection) : new ItemStack(b));
+    private static void armor(PlayerInventory inv, Material h, Material c, Material l, Material b) {
+        inv.setHelmet(new ItemStack(h));
+        inv.setChestplate(new ItemStack(c));
+        inv.setLeggings(new ItemStack(l));
+        inv.setBoots(new ItemStack(b));
     }
 
-    private static ItemStack enchanted(Material m, Enchantment e, int level) {
-        ItemStack i = new ItemStack(m);
-        i.addUnsafeEnchantment(e, level);
+    private static ItemStack potion(PotionType type) {
+        ItemStack i = new ItemStack(Material.POTION);
+        PotionMeta m = (PotionMeta) i.getItemMeta();
+        m.setBasePotionType(type);
+        i.setItemMeta(m);
         return i;
     }
 }

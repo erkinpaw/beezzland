@@ -50,15 +50,19 @@ const said = (bot, re) => bot.chats.some((m) => re.test(m));
   check("admin gives жужики for an event", said(A, /\+200 жужиков/));
   const home = A.entity.position.clone();
 
-  A.chat("/дуэль DuelB 50 алмазный");
+  A.chat("/duel DuelB 50");
+  await sleep(800);
+  check("without a kit: kit choice shows up in chat", said(A, /Выбери кит.*\[Алмазный\] \[Железный\] \[Лучник\]/), A.chats.slice(-1)[0]);
+  A.chat("/duel DuelB 50 diamond");
   await sleep(1000);
   check("the challenged player gets the request", said(B, /вызывает тебя на дуэль/));
-  B.chat("/дуэль принять");
+  B.chat("/duel accept");
   await sleep(1500);
   if (process.env.DEBUG) console.log("B:", B.chats.slice(-4).join(" | "), " A:", A.chats.slice(-4).join(" | "));
   check("both are taken to the arena (y=101)", Math.round(A.entity.position.y) === 101 && Math.round(B.entity.position.y) === 101,
     `A=${A.entity.position} B=${B.entity.position}`);
-  check("kit given, survival inventory gone", has(A, "diamond_sword") && !has(A, "dirt"));
+  check("diamond kit: sword, 5 golden apples, potions; survival inventory gone",
+    has(A, "diamond_sword") && has(A, "potion") && A.inventory.count(A.registry.itemsByName.golden_apple.id) === 5 && !has(A, "dirt"));
   const before = A.entity.position.clone();
   A.setControlState("forward", true);
   await sleep(1000);
@@ -68,7 +72,7 @@ const said = (bot, re) => bot.chats.some((m) => re.test(m));
   await sleep(500);
   check("commands are blocked in a duel", said(B, /команды не работают/));
   await sleep(2500);
-  B.chat("/дуэль сдаться");
+  B.chat("/duel surrender");
   await sleep(500);
   check("surrender: winner announced to everyone", said(A, /DuelA победил DuelB/) && said(B, /DuelA победил DuelB/));
   await sleep(4000);
@@ -87,9 +91,9 @@ const said = (bot, re) => bot.chats.some((m) => re.test(m));
 
   // a real fight: A walks up and hits until B is down (or the 40 s limit makes it a draw)
   A.chats.length = 0;
-  A.chat("/дуэль DuelB 20 лучник");
+  A.chat("/duel DuelB 20 iron");
   await sleep(800);
-  B.chat("/дуэль принять");
+  B.chat("/duel accept");
   await sleep(4500);
   const t0 = Date.now();
   let ended = false;

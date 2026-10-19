@@ -6,10 +6,10 @@ description: Жужики (валюта сайта) и дуэли на став�
 load: POSTWORLD
 
 commands:
-  дуэль:
+  duel:
     description: Вызвать игрока на дуэль за жужики
-    usage: /дуэль <ник> <ставка> [кит] | принять | отказ | сдаться
-    aliases: [duel]
+    usage: /duel <ник> <ставка> [diamond|iron|archer] | accept | decline | surrender
+    aliases: [дуэль]
   жужики:
     description: Баланс жужиков, топ и выдача за ивенты
     usage: /жужики [топ] | дать <ник> <сумма> [за что] | забрать <ник> <сумма>

@@ -10,6 +10,8 @@ import io.papermc.paper.registry.data.dialog.body.DialogBody;
 import io.papermc.paper.registry.data.dialog.type.DialogType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickCallback;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.kyori.adventure.title.Title;
@@ -114,8 +116,8 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         }
         arenas = new Arenas(c.getInt("duel.arenas", 8));
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("дуэль").setExecutor(this);
-        getCommand("дуэль").setTabCompleter(this);
+        getCommand("duel").setExecutor(this);
+        getCommand("duel").setTabCompleter(this);
         getCommand("жужики").setExecutor(this);
         getCommand("жужики").setTabCompleter(this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::export, 40L, 600L);
@@ -139,7 +141,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             return true;
         }
         if (a.length == 0) {
-            say(p, "<gray>Вызов: <white>/дуэль <ник> <ставка> [кит]</white>. Киты: <white>алмазный, незеритовый, лучник</white>.");
+            say(p, "<gray>Вызов: <white>/duel <ник> <ставка></white> — потом выбери кит в чате. Сдаться: <white>/duel surrender</white>.");
             return true;
         }
         switch (a[0].toLowerCase()) {
@@ -162,7 +164,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             return;
         }
         if (a.length < 2) {
-            say(p, "<gray>Укажи ставку: <white>/дуэль " + to.getName() + " 50");
+            say(p, "<gray>Укажи ставку: <white>/duel " + to.getName() + " 50");
             return;
         }
         long stake;
@@ -174,23 +176,21 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         }
         if (a.length >= 3) {
             Kit kit = Kit.byId(a[2]);
-            if (kit == null) say(p, "<#F87171>Нет такого кита. Есть: алмазный, незеритовый, лучник.");
+            if (kit == null) say(p, "<#F87171>Нет такого кита. Есть: diamond, iron, archer.");
             else sendRequest(p, to, kit, stake);
             return;
         }
-        // no kit given: let them pick in a window
-        List<ActionButton> buttons = new ArrayList<>();
+        // no kit given: pick one in chat; hovering a kit shows what is inside
+        Component line = MM.deserialize(P + "<gray>Выбери кит для дуэли с <white><to></white> (ставка <#FACC15>" + stake + "</#FACC15>):</gray>",
+                Placeholder.unparsed("to", to.getName()));
         for (Kit k : Kit.values()) {
-            buttons.add(ActionButton.builder(MM.deserialize("<#FACC15>" + k.title()))
-                    .tooltip(MM.deserialize("<gray>" + k.description())).width(150)
-                    .action(DialogAction.customClick((v, aud) -> sendRequest(p, to, k, stake), ONCE)).build());
+            Component hover = MM.deserialize("<#FACC15><bold>" + k.title() + "</bold></#FACC15>\n<gray>• "
+                    + String.join("\n• ", k.items()) + "</gray>\n\n<dark_gray>Нажми, чтобы отправить вызов");
+            line = line.append(Component.space()).append(MM.deserialize("<#FACC15>[" + k.title() + "]")
+                    .hoverEvent(HoverEvent.showText(hover))
+                    .clickEvent(ClickEvent.runCommand("/duel " + to.getName() + " " + stake + " " + k.id())));
         }
-        p.showDialog(Dialog.create(b -> b.empty()
-                .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Дуэль</bold> <gray>с " + to.getName()))
-                        .body(List.of(DialogBody.plainMessage(MM.deserialize("<white>Ставка: <#FACC15>" + stake
-                                + " жужиков</#FACC15>\n\n<gray>Выбери кит — у обоих будет одинаковый:"), 300)))
-                        .build())
-                .type(DialogType.multiAction(buttons).columns(1).build())));
+        p.sendMessage(line);
     }
 
     private void sendRequest(Player from, Player to, Kit kit, long stake) {
@@ -224,8 +224,8 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
                         ActionButton.builder(MM.deserialize("<#F87171>Отказаться")).width(120)
                                 .action(DialogAction.customClick((v, aud) -> decline(to), ONCE)).build()))));
         to.sendMessage(MM.deserialize(P + "<white>" + from.getName() + "</white> <gray>вызывает тебя на дуэль ("
-                + kit.title() + ", " + stake + " жужиков). </gray><#34D399><click:run_command:'/дуэль принять'>[Принять]</click></#34D399> "
-                + "<#F87171><click:run_command:'/дуэль отказ'>[Отказаться]</click></#F87171>"));
+                + kit.title() + ", " + stake + " жужиков). </gray><#34D399><click:run_command:'/duel accept'>[Принять]</click></#34D399> "
+                + "<#F87171><click:run_command:'/duel decline'>[Отказаться]</click></#F87171>"));
         to.playSound(to.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1.2f);
         getServer().getScheduler().runTaskLater(this, () -> {
             if (requests.get(to.getUniqueId()) == r) {
@@ -588,9 +588,9 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     public void onCommand(PlayerCommandPreprocessEvent e) {
         if (!duels.containsKey(e.getPlayer().getUniqueId())) return;
         String m = e.getMessage().toLowerCase();
-        if (!m.startsWith("/дуэль сдаться") && !m.startsWith("/duel surrender") && !m.startsWith("/duel сдаться")) {
+        if (!m.matches("^/(duel|дуэль) (surrender|сдаться).*")) {
             e.setCancelled(true);
-            say(e.getPlayer(), "<gray>Во время дуэли команды не работают. Сдаться: <white>/дуэль сдаться");
+            say(e.getPlayer(), "<gray>Во время дуэли команды не работают. Сдаться: <white>/duel surrender");
         }
     }
 
@@ -666,7 +666,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             if (a.length == 1) out.addAll(s.hasPermission("beezzduels.admin") ? List.of("топ", "дать", "забрать") : List.of("топ"));
             else if (a.length == 2 && !a[0].equalsIgnoreCase("топ")) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
         } else if (a.length == 1) {
-            out.addAll(List.of("принять", "отказ", "сдаться"));
+            out.addAll(List.of("accept", "decline", "surrender"));
             Bukkit.getOnlinePlayers().stream().filter(p -> !p.equals(s)).forEach(p -> out.add(p.getName()));
         } else if (a.length == 2 && Bukkit.getPlayerExact(a[0]) != null) {
             out.addAll(List.of("10", "50", "100"));
