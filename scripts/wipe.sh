@@ -8,6 +8,8 @@
 # Reset: all worlds (overworld, nether, end, farm, farm_nether — in 26.x they all live in
 #        survival/world), inventories/advancements/stats (inside world), WebTrade balances and
 #        orders, BeezzWorlds stages (all closed again) and honeycomb portals, map tiles.
+#        New secret seeds every season (scripts/seeds.py): the seed can't be cracked from the
+#        world, and BeezzWorlds re-rolls the bedrock pattern in every new chunk.
 # Kept:  BeezzAuth links, LuckPerms ranks, bans (LibertyBans), Carbon chat settings, Plan history,
 #        all configs.
 set -euo pipefail
@@ -59,6 +61,9 @@ for f in accounts.yml containers.yml warehouse.yml; do move "plugins/WebTrade/$f
 move plugins/BeezzWorlds/state.yml
 move plugins/BeezzWorlds/portals.yml
 move plugins/CoreProtect/database.db             # block log of the old world (if SQLite)
+
+echo "=== New secret seeds for the new world (level seed, structure salts, feature seeds)"
+python3 "$BASE/scripts/seeds.py" "$SURV"
 
 if [[ $NOSYSTEMD == 0 ]]; then
   chown -R minecraft:minecraft "$BASE/backups"
