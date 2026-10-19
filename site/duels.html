@@ -23,27 +23,84 @@
   </script>
   <style>
     .duels { padding-top: 40px; }
-    .two { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; align-items: start; }
     .panel { background: linear-gradient(180deg, var(--surface), var(--bg-2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
-    .panel h3 { margin: 0 0 14px; font: 13px/1.4 var(--pixel); color: var(--honey); }
-    table { width: 100%; border-collapse: collapse; font-size: 15px; }
-    th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 0 8px 8px; }
-    td { padding: 9px 8px; border-top: 1px solid var(--border); }
-    td.n { color: var(--muted); width: 28px; font-family: var(--pixel); font-size: 11px; }
-    tr:first-child td.n { color: var(--honey); }
-    .num { text-align: right; white-space: nowrap; }
+    .panel > h3 { margin: 0 0 18px; font: 14px/1.4 var(--pixel); color: var(--honey); display: flex; align-items: center; gap: 10px; }
+    .panel > h3 small { font: 600 13px var(--body); color: var(--muted); margin-left: auto; }
+    .main { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: start; }
+    .head { image-rendering: pixelated; border-radius: 6px; background: var(--surface-2); flex: none; }
+    .zh { color: var(--honey); font-weight: 800; white-space: nowrap; }
     .plus { color: var(--ok); } .minus { color: var(--bad); }
-    .fight { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--border); }
-    .fight:first-of-type { border-top: 0; padding-top: 0; }
-    .fight .who b { color: var(--text); } .fight .who { color: var(--muted); }
-    .fight .win { color: var(--ok); font-weight: 700; }
-    .fight .meta { color: var(--muted); font-size: 13px; grid-column: 1 / -1; }
-    .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--blue-3); margin-right: 6px; }
-    .zh { color: var(--honey); font-weight: 700; white-space: nowrap; }
     .empty { color: var(--muted); padding: 8px 0; }
-    .info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
-    .cmd { font-family: var(--pixel); font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: block; margin: 10px 0 0; color: var(--honey); overflow-x: auto; }
-    @media (max-width: 860px) { .two, .info { grid-template-columns: 1fr; } }
+
+    /* podium: places 1-3 */
+    .podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 10px; align-items: end; margin: 8px 0 14px; }
+    .place { text-align: center; padding: 18px 10px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--border); position: relative; min-width: 0; }
+    .place .head { width: 56px; height: 56px; display: block; margin: 0 auto 10px; }
+    .place.p1 { padding-top: 26px; border-color: #a16207; background: linear-gradient(180deg, rgba(250,204,21,.16), var(--surface-2)); box-shadow: 0 0 30px rgba(250,204,21,.12); }
+    .place.p1 .head { width: 72px; height: 72px; }
+    .place .medal { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font: 11px var(--pixel); padding: 5px 8px; border-radius: 6px; color: #111; }
+    .p1 .medal { background: var(--honey); box-shadow: 0 3px 0 #a16207; }
+    .p2 .medal { background: #cbd5e1; box-shadow: 0 3px 0 #64748b; }
+    .p3 .medal { background: #f59e0b; box-shadow: 0 3px 0 #92400e; }
+    .place > b { display: block; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .place .wl { color: var(--muted); font-size: 13px; margin: 2px 0 6px; }
+
+    /* places 4-10 */
+    .row { display: grid; grid-template-columns: 26px 32px 1fr 110px 64px; gap: 10px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--border); }
+    .row .n { font: 11px var(--pixel); color: var(--muted); }
+    .row .head { width: 32px; height: 32px; }
+    .row .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row .name small { display: block; color: var(--muted); font-weight: 600; font-size: 12px; }
+    .bar { height: 6px; border-radius: 99px; background: rgba(248,113,113,.35); overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--ok); }
+    .rate { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .row .num { text-align: right; font-weight: 800; }
+
+    /* recent fights */
+    .fight { display: flex; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--border); }
+    .fight:first-child { border-top: 0; padding-top: 0; }
+    .fight .head.w { width: 48px; height: 48px; box-shadow: 0 0 0 2px var(--ok); }
+    .fight .head.l { width: 26px; height: 26px; filter: grayscale(1) brightness(.7); vertical-align: middle; margin: 0 4px; }
+    .fight .what { flex: 1; min-width: 0; }
+    .fight .who { color: var(--muted); }
+    .fight .who b { color: var(--text); }
+    .fight .who .win { color: var(--ok); font-weight: 800; }
+    .fight .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .fight.draw .head.w { box-shadow: 0 0 0 2px var(--muted); }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--blue-3); margin-right: 6px; }
+    .more { margin-top: 12px; width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: 600 14px var(--body); cursor: pointer; }
+    .more:hover { border-color: #2c4170; }
+
+    /* info: collapsible cards */
+    .info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 16px; align-items: start; }
+    details.panel { padding: 0; }
+    details.panel summary { list-style: none; cursor: pointer; padding: 18px 22px; display: flex; align-items: center; gap: 12px; }
+    details.panel summary::-webkit-details-marker { display: none; }
+    details.panel summary .t { font: 13px/1.4 var(--pixel); color: var(--honey); }
+    details.panel summary .s { display: block; font: 600 13px var(--body); color: var(--muted); margin-top: 6px; }
+    details.panel summary::after { content: "+"; margin-left: auto; font: 16px var(--pixel); color: var(--muted); transition: transform .2s; }
+    details.panel[open] summary::after { transform: rotate(45deg); }
+    details.panel .body { padding: 0 22px 20px; color: var(--text); font-size: 15px; }
+    .body ol, .body ul { margin: 0; padding-left: 20px; }
+    .body li { margin: 6px 0; }
+    .body li::marker { color: var(--honey); }
+    .body .note { color: var(--muted); font-size: 13px; margin-top: 12px; }
+    .cmd { font-family: var(--pixel); font-size: 11px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 7px; color: var(--honey); white-space: nowrap; }
+    .kit { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+    .kit b { color: var(--honey); }
+    .kit ul { margin-top: 6px; color: var(--muted); font-size: 14px; }
+    .days { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .days span { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; text-align: center; font-size: 12px; color: var(--muted); min-width: 52px; }
+    .days span b { display: block; color: var(--honey); font-size: 14px; }
+
+    @media (max-width: 900px) { .main, .info { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) {
+      .row { grid-template-columns: 22px 28px 1fr 56px; }
+      .row .rcol { display: none; }
+      .podium { gap: 6px; }
+      .place .head { width: 44px; height: 44px; }
+      .place.p1 .head { width: 56px; height: 56px; }
+    }
   </style>
 </head>
 <body>
@@ -63,45 +120,69 @@
 <main class="wrap duels">
   <section>
     <h2>Дуэли</h2>
-    <p class="sub">Вызови игрока на бой за <b class="zh">жужики</b>. Оба получают одинаковый кит, свои вещи остаются дома.
-      Победитель забирает обе ставки (сервер берёт <span data-commission>5</span>%).</p>
+    <p class="sub">Бой один на один за <b class="zh">жужики</b>: <span class="cmd">/duel Ник 50</span>. Одинаковые киты, свои вещи остаются дома,
+      победитель забирает обе ставки.</p>
 
-    <div class="info">
+    <div class="main">
       <div class="panel">
-        <h3>Как вызвать</h3>
-        Напиши в игре:
-        <code class="cmd">/duel Ник 50</code>
-        <p class="sub" style="margin:10px 0 0">Ставка — от <span data-min>10</span> до <span data-max>5000</span>. В чате появятся киты: наведи, чтобы увидеть, что внутри, и нажми нужный. Соперник увидит окно «Принять / Отказаться». Сдаться: <code>/duel surrender</code>.</p>
+        <h3>Топ-10 дуэлянтов <small>по победам</small></h3>
+        <div data-podium class="podium"></div>
+        <div data-rows><div class="empty">Загружаем…</div></div>
       </div>
       <div class="panel">
-        <h3>Киты</h3>
-        <div data-kits class="empty">…</div>
-      </div>
-      <div class="panel">
-        <h3>Жужики</h3>
-        Валюту можно только заработать: <b>вход каждый день</b> (чем дольше серия, тем больше) и <b>ивенты</b>.
-        Купить её за деньги нельзя. Баланс в игре: <code>/жужики</code>.
+        <h3>Последние дуэли <small data-updated></small></h3>
+        <div data-recent><div class="empty">Загружаем…</div></div>
+        <button class="more" data-more hidden>Показать ещё</button>
       </div>
     </div>
 
-    <div class="two">
-      <div class="panel">
-        <h3>Топ-10 дуэлянтов</h3>
-        <table>
-          <thead><tr><th></th><th>Игрок</th><th class="num">Победы</th><th class="num">Пораж.</th><th class="num">Итог</th></tr></thead>
-          <tbody data-top><tr><td colspan="5" class="empty">Загружаем…</td></tr></tbody>
-        </table>
-      </div>
-      <div class="panel">
-        <h3>Последние дуэли</h3>
-        <div data-recent class="empty">Загружаем…</div>
-      </div>
+    <div class="info">
+      <details class="panel">
+        <summary><div><span class="t">Как вызвать</span><span class="s">Команда, выбор кита и правила боя</span></div></summary>
+        <div class="body">
+          <ol>
+            <li>Напиши в игре <span class="cmd">/duel Ник 50</span>, где 50 — ставка в жужиках.</li>
+            <li>В чате появятся киты. <b>Наведи</b> на кит, чтобы увидеть, что в нём, и <b>нажми</b> нужный.</li>
+            <li>У соперника откроется окно <b>«Принять / Отказаться»</b> (или <span class="cmd">/duel accept</span>).</li>
+            <li>Обоих переносит на арену в отдельный мир. Отсчёт 3-2-1 — и бой!</li>
+            <li>Победитель получает обе ставки минус <span data-commission>5</span>% сервера. Все возвращаются туда, где стояли, со своими вещами.</li>
+          </ol>
+          <p class="note">Сдаться: <span class="cmd">/duel surrender</span>. Ставка — от <span data-min>10</span> до <span data-max>5000</span>.</p>
+          <ul class="note">
+            <li>С одним и тем же игроком — не больше <span data-pair>5</span> дуэлей в сутки.</li>
+            <li>Нельзя вызывать игроков с того же IP (твинки).</li>
+            <li>Вызвать или принять можно не раньше чем через 10 секунд после урона.</li>
+            <li>Бой дольше <span data-maxfight>3 мин</span> — ничья, ставки возвращаются.</li>
+            <li>Во время боя команды не работают. Вышел с сервера — поражение.</li>
+          </ul>
+        </div>
+      </details>
+      <details class="panel">
+        <summary><div><span class="t">Киты</span><span class="s" data-kitnames>Алмазный, Железный, Лучник</span></div></summary>
+        <div class="body" data-kits><div class="empty">Загружаем…</div></div>
+      </details>
+      <details class="panel">
+        <summary><div><span class="t">Жужики</span><span class="s">Как заработать и на что потратить</span></div></summary>
+        <div class="body">
+          <b>Вход каждый день</b> — чем дольше серия, тем больше:
+          <div class="days" data-days></div>
+          <b>Ивенты</b> — награды за конкурсы, турниры и задания от администрации.
+          <p class="note">Тратятся на ставки в дуэлях, скоро — на донат-ранги (Silver, Gold, Diamond).
+            Купить жужики за деньги нельзя: на них играют в дуэли.</p>
+          <p class="note">В игре: <span class="cmd">/жужики</span> — баланс, <span class="cmd">/жужики топ</span> — самые богатые.</p>
+        </div>
+      </details>
     </div>
   </section>
 </main>
 
 <script>
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // skin heads by nickname; anyone without a known skin gets Steve
+  const head = (name, size, cls = "") => `<img class="head ${cls}" width="${size}" height="${size}" loading="lazy" alt=""
+      src="https://mc-heads.net/avatar/${encodeURIComponent(name)}/${size * 2}"
+      onerror="this.onerror=null;this.src='https://mc-heads.net/avatar/MHF_Steve/${size * 2}'">`;
+  const sign = (n) => (n > 0 ? "+" : "") + n;
   const ago = (t) => {
     const m = Math.round((Date.now() - t) / 60000);
     if (m < 1) return "только что";
@@ -109,38 +190,72 @@
     if (m < 1440) return Math.round(m / 60) + " ч назад";
     return new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
   };
+  const set = (sel, v) => document.querySelectorAll(sel).forEach((e) => (e.textContent = v));
+  let shown = 8, data;
+
+  function render() {
+    const d = data, kitTitle = Object.fromEntries(d.kits.map((k) => [k.id, k.title]));
+    // podium (order 2-1-3 so the champion stands in the middle)
+    const top = d.top;
+    document.querySelector("[data-podium]").innerHTML = top.length ? [1, 0, 2].filter((i) => top[i]).map((i) => {
+      const t = top[i];
+      return `<div class="place p${i + 1}"><span class="medal">${i + 1}</span>${head(t.name, i ? 56 : 72)}
+        <b>${esc(t.name)}</b><div class="wl">${t.wins} побед · ${t.losses} пораж.</div>
+        <div class="${t.earned >= 0 ? "plus" : "minus"}"><b>${sign(t.earned)}</b></div></div>`;
+    }).join("") : "";
+    const rest = top.slice(3);
+    document.querySelector("[data-rows]").innerHTML = !top.length ? '<div class="empty">Дуэлей пока не было — стань первым чемпионом!</div>'
+      : rest.map((t, i) => {
+        const games = t.wins + t.losses, rate = games ? Math.round((t.wins / games) * 100) : 0;
+        return `<div class="row"><span class="n">${i + 4}</span>${head(t.name, 32)}
+          <span class="name">${esc(t.name)}<small>${t.wins} / ${t.losses}</small></span>
+          <span class="rcol"><div class="bar"><i style="width:${rate}%"></i></div><div class="rate">${rate}% побед</div></span>
+          <span class="num ${t.earned >= 0 ? "plus" : "minus"}">${sign(t.earned)}</span></div>`;
+      }).join("");
+    // recent fights: the winner's head big, the loser's small and grey
+    const list = d.recent.slice(0, shown);
+    document.querySelector("[data-recent]").innerHTML = list.length ? list.map((f) => {
+      const draw = !f.winner, loser = f.winner === f.a ? f.b : f.a;
+      return `<div class="fight${draw ? " draw" : ""}">${head(draw ? f.a : f.winner, 48, "w")}
+        <div class="what"><div class="who">${draw ? `<b>${esc(f.a)}</b> и ${head(f.b, 26, "l")}<b>${esc(f.b)}</b> — ничья`
+          : `<span class="win">${esc(f.winner)}</span> победил ${head(loser, 26, "l")}<b>${esc(loser)}</b>`}</div>
+          <div class="meta"><span class="tag">${esc(kitTitle[f.kit] || f.kit)}</span>ставка ${f.stake} · ${f.seconds} с · ${ago(f.at)}</div></div>
+        <div class="zh">${draw ? "возврат" : "+" + f.prize}</div></div>`;
+    }).join("") : '<div class="empty">Дуэлей пока не было.</div>';
+    document.querySelector("[data-more]").hidden = d.recent.length <= shown;
+    set("[data-updated]", "обновлено " + ago(d.updated));
+    // details
+    set("[data-commission]", d.commission_percent);
+    set("[data-min]", d.min_stake);
+    set("[data-max]", d.max_stake);
+    if (d.pair_per_day) set("[data-pair]", d.pair_per_day);
+    if (d.max_fight_seconds) set("[data-maxfight]", Math.round(d.max_fight_seconds / 60) + " мин");
+    set("[data-kitnames]", d.kits.map((k) => k.title).join(", "));
+    document.querySelector("[data-kits]").innerHTML = d.kits.map((k) => `<div class="kit"><b>${esc(k.title)}</b>
+      <ul>${(k.items || [k.description]).map((i) => `<li>${esc(i)}</li>`).join("")}</ul></div>`).join("")
+      + `<p class="note">У обоих игроков кит одинаковый. Вещи из кита после боя исчезают, свои — возвращаются.</p>`;
+    if (d.daily) {
+      const days = [];
+      for (let n = 1; n <= 7; n++) days.push(`<span>день ${n}<b>${Math.min(d.daily.max, d.daily.base + d.daily.step * (n - 1))}</b></span>`);
+      days.push(`<span>дальше<b>${d.daily.max}</b></span>`);
+      document.querySelector("[data-days]").innerHTML = days.join("");
+    }
+  }
+
   async function load() {
-    let d;
     try {
       const r = await fetch("/api/duels", { cache: "no-store" });
       if (!r.ok) throw 0;
-      d = await r.json();
+      data = await r.json();
+      render();
     } catch (e) {
-      document.querySelector("[data-top]").innerHTML = '<tr><td colspan="5" class="empty">Сервер дуэлей сейчас недоступен.</td></tr>';
-      document.querySelector("[data-recent]").textContent = "Сервер дуэлей сейчас недоступен.";
-      return;
+      if (!data) {
+        document.querySelector("[data-rows]").innerHTML = '<div class="empty">Сервер дуэлей сейчас недоступен.</div>';
+        document.querySelector("[data-recent]").innerHTML = '<div class="empty">Сервер дуэлей сейчас недоступен.</div>';
+      }
     }
-    document.querySelector("[data-commission]").textContent = d.commission_percent;
-    document.querySelector("[data-min]").textContent = d.min_stake;
-    document.querySelector("[data-max]").textContent = d.max_stake;
-    const kitTitle = Object.fromEntries(d.kits.map((k) => [k.id, k.title]));
-    document.querySelector("[data-kits]").innerHTML = d.kits.map((k) =>
-      `<div style="margin-bottom:8px"><span class="tag">${esc(k.title)}</span><span style="color:var(--muted);font-size:14px">${esc(k.description)}</span></div>`).join("");
-    document.querySelector("[data-top]").innerHTML = d.top.length ? d.top.map((t, i) => `<tr>
-        <td class="n">${i + 1}</td><td>${esc(t.name)}</td><td class="num">${t.wins}</td><td class="num">${t.losses}</td>
-        <td class="num ${t.earned >= 0 ? "plus" : "minus"}">${t.earned > 0 ? "+" : ""}${t.earned}</td></tr>`).join("")
-      : '<tr><td colspan="5" class="empty">Дуэлей пока не было — будь первым!</td></tr>';
-    document.querySelector("[data-recent]").classList.toggle("empty", !d.recent.length);
-    document.querySelector("[data-recent]").innerHTML = d.recent.length ? d.recent.map((f) => {
-      const draw = !f.winner, loser = f.winner === f.a ? f.b : f.a;
-      return `<div class="fight">
-        <div class="who">${draw ? `<b>${esc(f.a)}</b> и <b>${esc(f.b)}</b> — ничья`
-          : `<span class="win">${esc(f.winner)}</span> победил <b>${esc(loser)}</b>`}</div>
-        <div class="zh">${draw ? "ставки вернулись" : "+" + f.prize}</div>
-        <div class="meta"><span class="tag">${esc(kitTitle[f.kit] || f.kit)}</span>ставка ${f.stake} · ${f.seconds} с · ${ago(f.at)}</div>
-      </div>`;
-    }).join("") : "Дуэлей пока не было — будь первым!";
   }
+  document.querySelector("[data-more]").onclick = () => { shown += 10; render(); };
   load();
   setInterval(load, 30000);
 </script>

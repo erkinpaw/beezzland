@@ -632,8 +632,13 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             out.put("commission_percent", commission);
             out.put("min_stake", minStake);
             out.put("max_stake", maxStake);
-            List<Map<String, String>> kits = new ArrayList<>();
-            for (Kit k : Kit.values()) kits.add(Map.of("id", k.id(), "title", k.title(), "description", k.description()));
+            List<Map<String, Object>> kits = new ArrayList<>();
+            for (Kit k : Kit.values()) {
+                kits.add(Map.of("id", k.id(), "title", k.title(), "description", k.description(), "items", k.items()));
+            }
+            out.put("pair_per_day", pairPerDay);
+            out.put("max_fight_seconds", fightTicks / 20);
+            out.put("daily", Map.of("base", dailyBase, "step", dailyStep, "max", dailyMax));
             out.put("kits", kits);
             out.put("top", store.top(10));
             out.put("recent", store.recent(20));

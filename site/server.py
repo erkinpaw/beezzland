@@ -81,6 +81,12 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             super().do_GET()
 
+    def end_headers(self):
+        # pages change with every update of the site: the browser must re-check them, not use a stale copy
+        if self.path.split("?")[0].endswith((".html", "/")) and "Cache-Control" not in "".join(map(str, getattr(self, "_headers_buffer", []))):
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
+
     def send_calculator(self):
         try:
             data = open(os.path.join(WEBTRADE, "calculator.html"), "rb").read()
