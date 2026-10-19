@@ -92,6 +92,10 @@
       "why": "миры: открытие командой, мир ферм + свой незер, портал из пчелиных сот (исходники: plugins-src/BeezzWorlds)"
     },
     {
+      "file": "custom-plugins/BeezzDuels-1.0.0.jar",
+      "why": "жужики (валюта сайта: вход каждый день, ивенты) и дуэли на ставку с китами; duels.json для вкладки «Дуэли» (исходники: plugins-src/BeezzDuels)"
+    },
+    {
       "file": "custom-plugins/BeezzCore-1.0.0.jar",
       "why": "приветствие новичков, /rules, /links, подсказки в чате (исходники: plugins-src/BeezzCore)"
     }

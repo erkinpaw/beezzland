@@ -1,0 +1,21 @@
+name: BeezzDuels
+version: '${version}'
+main: land.beezz.duels.BeezzDuels
+api-version: '26.3'
+description: Жужики (валюта сайта) и дуэли на ставку
+load: POSTWORLD
+
+commands:
+  дуэль:
+    description: Вызвать игрока на дуэль за жужики
+    usage: /дуэль <ник> <ставка> [кит] | принять | отказ | сдаться
+    aliases: [duel]
+  жужики:
+    description: Баланс жужиков, топ и выдача за ивенты
+    usage: /жужики [топ] | дать <ник> <сумма> [за что] | забрать <ник> <сумма>
+    aliases: [zhuzhiki, zh]
+
+permissions:
+  beezzduels.admin:
+    description: Выдавать и забирать жужики (награды за ивенты)
+    default: op

@@ -11,6 +11,7 @@
 #        New secret seeds every season (scripts/seeds.py): the seed can't be cracked from the
 #        world, and BeezzWorlds re-rolls the bedrock pattern in every new chunk.
 # Kept:  BeezzAuth links, LuckPerms ranks, bans (LibertyBans), Carbon chat settings, Plan history,
+#        жужики balances and duel history (BeezzDuels: the site currency outlives seasons),
 #        all configs.
 set -euo pipefail
 

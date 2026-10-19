@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Дуэли — BeezzLand</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search), t = q.get("theme");
+      try {
+        if (!t) t = localStorage.getItem("beezz-theme");
+        else if (!q.has("preview")) localStorage.setItem("beezz-theme", t);
+      } catch (e) {}
+      if (t && t !== "hive" && /^[a-z]+$/.test(t)) {
+        document.documentElement.dataset.theme = t;
+        document.write('<link rel="stylesheet" href="themes/' + t + '.css">');
+      }
+    })();
+  </script>
+  <style>
+    .duels { padding-top: 40px; }
+    .two { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; align-items: start; }
+    .panel { background: linear-gradient(180deg, var(--surface), var(--bg-2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+    .panel h3 { margin: 0 0 14px; font: 13px/1.4 var(--pixel); color: var(--honey); }
+    table { width: 100%; border-collapse: collapse; font-size: 15px; }
+    th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 0 8px 8px; }
+    td { padding: 9px 8px; border-top: 1px solid var(--border); }
+    td.n { color: var(--muted); width: 28px; font-family: var(--pixel); font-size: 11px; }
+    tr:first-child td.n { color: var(--honey); }
+    .num { text-align: right; white-space: nowrap; }
+    .plus { color: var(--ok); } .minus { color: var(--bad); }
+    .fight { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 0; border-top: 1px solid var(--border); }
+    .fight:first-of-type { border-top: 0; padding-top: 0; }
+    .fight .who b { color: var(--text); } .fight .who { color: var(--muted); }
+    .fight .win { color: var(--ok); font-weight: 700; }
+    .fight .meta { color: var(--muted); font-size: 13px; grid-column: 1 / -1; }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 99px; background: var(--surface-2); border: 1px solid var(--border); font-size: 12px; color: var(--blue-3); margin-right: 6px; }
+    .zh { color: var(--honey); font-weight: 700; white-space: nowrap; }
+    .empty { color: var(--muted); padding: 8px 0; }
+    .info { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+    .cmd { font-family: var(--pixel); font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: block; margin: 10px 0 0; color: var(--honey); overflow-x: auto; }
+    @media (max-width: 860px) { .two, .info { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="hive"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
+    <nav>
+      <a href="/">Главная</a>
+      <a href="map.html">Карта</a>
+      <a class="on" href="duels.html">Дуэли</a>
+      <a href="calculator.html">Калькулятор</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap duels">
+  <section>
+    <h2>Дуэли</h2>
+    <p class="sub">Вызови игрока на бой за <b class="zh">жужики</b>. Оба получают одинаковый кит, свои вещи остаются дома.
+      Победитель забирает обе ставки (сервер берёт <span data-commission>5</span>%).</p>
+
+    <div class="info">
+      <div class="panel">
+        <h3>Как вызвать</h3>
+        Напиши в игре:
+        <code class="cmd">/дуэль Ник 50 алмазный</code>
+        <p class="sub" style="margin:10px 0 0">Ставка — от <span data-min>10</span> до <span data-max>5000</span>. Соперник увидит окно «Принять / Отказаться». Сдаться: <code>/дуэль сдаться</code>.</p>
+      </div>
+      <div class="panel">
+        <h3>Киты</h3>
+        <div data-kits class="empty">…</div>
+      </div>
+      <div class="panel">
+        <h3>Жужики</h3>
+        Валюту можно только заработать: <b>вход каждый день</b> (чем дольше серия, тем больше) и <b>ивенты</b>.
+        Купить её за деньги нельзя. Баланс в игре: <code>/жужики</code>.
+      </div>
+    </div>
+
+    <div class="two">
+      <div class="panel">
+        <h3>Топ-10 дуэлянтов</h3>
+        <table>
+          <thead><tr><th></th><th>Игрок</th><th class="num">Победы</th><th class="num">Пораж.</th><th class="num">Итог</th></tr></thead>
+          <tbody data-top><tr><td colspan="5" class="empty">Загружаем…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <h3>Последние дуэли</h3>
+        <div data-recent class="empty">Загружаем…</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const ago = (t) => {
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return "только что";
+    if (m < 60) return m + " мин назад";
+    if (m < 1440) return Math.round(m / 60) + " ч назад";
+    return new Date(t).toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+  };
+  async function load() {
+    let d;
+    try {
+      const r = await fetch("/api/duels", { cache: "no-store" });
+      if (!r.ok) throw 0;
+      d = await r.json();
+    } catch (e) {
+      document.querySelector("[data-top]").innerHTML = '<tr><td colspan="5" class="empty">Сервер дуэлей сейчас недоступен.</td></tr>';
+      document.querySelector("[data-recent]").textContent = "Сервер дуэлей сейчас недоступен.";
+      return;
+    }
+    document.querySelector("[data-commission]").textContent = d.commission_percent;
+    document.querySelector("[data-min]").textContent = d.min_stake;
+    document.querySelector("[data-max]").textContent = d.max_stake;
+    const kitTitle = Object.fromEntries(d.kits.map((k) => [k.id, k.title]));
+    document.querySelector("[data-kits]").innerHTML = d.kits.map((k) =>
+      `<div style="margin-bottom:8px"><span class="tag">${esc(k.title)}</span><span style="color:var(--muted);font-size:14px">${esc(k.description)}</span></div>`).join("");
+    document.querySelector("[data-top]").innerHTML = d.top.length ? d.top.map((t, i) => `<tr>
+        <td class="n">${i + 1}</td><td>${esc(t.name)}</td><td class="num">${t.wins}</td><td class="num">${t.losses}</td>
+        <td class="num ${t.earned >= 0 ? "plus" : "minus"}">${t.earned > 0 ? "+" : ""}${t.earned}</td></tr>`).join("")
+      : '<tr><td colspan="5" class="empty">Дуэлей пока не было — будь первым!</td></tr>';
+    document.querySelector("[data-recent]").classList.toggle("empty", !d.recent.length);
+    document.querySelector("[data-recent]").innerHTML = d.recent.length ? d.recent.map((f) => {
+      const draw = !f.winner, loser = f.winner === f.a ? f.b : f.a;
+      return `<div class="fight">
+        <div class="who">${draw ? `<b>${esc(f.a)}</b> и <b>${esc(f.b)}</b> — ничья`
+          : `<span class="win">${esc(f.winner)}</span> победил <b>${esc(loser)}</b>`}</div>
+        <div class="zh">${draw ? "ставки вернулись" : "+" + f.prize}</div>
+        <div class="meta"><span class="tag">${esc(kitTitle[f.kit] || f.kit)}</span>ставка ${f.stake} · ${f.seconds} с · ${ago(f.at)}</div>
+      </div>`;
+    }).join("") : "Дуэлей пока не было — будь первым!";
+  }
+  load();
+  setInterval(load, 30000);
+</script>
+</body>
+</html>

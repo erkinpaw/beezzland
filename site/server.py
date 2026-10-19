@@ -1,8 +1,10 @@
 """BeezzLand site: static files + /api/status (live server ping) + /map/ (proxy to Pl3xMap)
-+ /webtrade/calculator.html (the price calculator WebTrade exports with current prices).
++ /webtrade/calculator.html (the price calculator WebTrade exports with current prices)
++ /api/duels (top, last fights and kits that BeezzDuels exports to duels.json).
 
 Usage: python server.py [--port 8080] [--mc 127.0.0.1:25565] [--map 127.0.0.1:8100]
                         [--webtrade /opt/mc/survival/plugins/WebTrade]
+                        [--duels /opt/mc/survival/plugins/BeezzDuels/duels.json]
 On the VPS nginx can take over static files and /map/; this script is enough to start.
 """
 import argparse, json, os, socket, struct, time, urllib.error, urllib.request
@@ -72,6 +74,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.end_headers()
         elif self.path.startswith("/map/"):
             self.proxy_map()
+        elif self.path.split("?")[0] == "/api/duels":
+            self.send_duels()
         elif self.path.split("?")[0] == "/webtrade/calculator.html":
             self.send_calculator()
         else:
@@ -86,6 +90,19 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.send_header("Cache-Control", "no-cache")  # prices change when the plugin re-exports
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def send_duels(self):
+        try:
+            data = open(DUELS, "rb").read()
+        except OSError:
+            self.send_error(503, "Duels are not exported yet")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -141,8 +158,10 @@ if __name__ == "__main__":
     ap.add_argument("--mc", default="127.0.0.1:25565")
     ap.add_argument("--map", default="127.0.0.1:8100")
     ap.add_argument("--webtrade", default="/opt/mc/survival/plugins/WebTrade")
+    ap.add_argument("--duels", default="/opt/mc/survival/plugins/BeezzDuels/duels.json")
     a = ap.parse_args()
     WEBTRADE = a.webtrade
+    DUELS = a.duels
     MC = (a.mc.split(":")[0], int(a.mc.split(":")[1]))
     MAP = (a.map.split(":")[0], int(a.map.split(":")[1]))
     print(f"BeezzLand site: http://localhost:{a.port}  (minecraft {a.mc}, map {a.map})")
