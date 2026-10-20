@@ -56,6 +56,28 @@ final class LinkApi {
                 log.warn("link API: {}", e.toString());
             }
         });
+        // the site: login with «Это я» in a bot, and which messengers a nick has
+        server.createContext("/site/", ex -> {
+            try (ex) {
+                String given = ex.getRequestHeaders().getFirst("X-Secret");
+                if (given == null || !MessageDigest.isEqual(secret, given.trim().getBytes(StandardCharsets.UTF_8))) {
+                    reply(ex, 403, "{\"error\":\"bad secret\"}");
+                    return;
+                }
+                Map<String, String> q = query(ex.getRequestURI().getRawQuery());
+                String path = ex.getRequestURI().getPath();
+                String name = q.getOrDefault("name", "");
+                switch (path) {
+                    case "/site/login" -> reply(ex, 200, name.matches("[A-Za-z0-9_.]{1,32}")
+                            ? auth.siteLogin(name, q.getOrDefault("ip", "")).toString() : "{\"error\":\"bad_name\"}");
+                    case "/site/status" -> reply(ex, 200, auth.siteLoginStatus(q.getOrDefault("request", "")).toString());
+                    case "/site/links" -> reply(ex, 200, auth.links(name).toString());
+                    default -> reply(ex, 404, "{}");
+                }
+            } catch (Exception e) {
+                log.warn("site API: {}", e.toString());
+            }
+        });
         server.start();
     }
 

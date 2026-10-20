@@ -126,7 +126,7 @@ public final class VkBot implements Provider {
     }
 
     @Override
-    public void sendConfirm(String userId, String nick, String maskedIp, String requestId) {
+    public void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId) {
         JsonArray row = new JsonArray();
         row.add(button("Это я", "ok:" + requestId, "positive"));
         row.add(button("Это не я", "no:" + requestId, "negative"));
@@ -135,7 +135,7 @@ public final class VkBot implements Provider {
         JsonObject keyboard = new JsonObject();
         keyboard.addProperty("inline", true);
         keyboard.add("buttons", rows);
-        send(userId, "🐝 Вход на BeezzLand\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?", keyboard.toString());
+        send(userId, "🐝 " + what + "\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?", keyboard.toString());
     }
 
     @Override

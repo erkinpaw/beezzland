@@ -101,10 +101,10 @@ public final class TelegramBot implements Provider {
     }
 
     @Override
-    public void sendConfirm(String userId, String nick, String maskedIp, String requestId) {
+    public void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId) {
         JsonObject body = new JsonObject();
         body.addProperty("chat_id", userId);
-        body.addProperty("text", "🐝 Вход на BeezzLand\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?");
+        body.addProperty("text", "🐝 " + what + "\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?");
         JsonArray row = new JsonArray();
         row.add(button("✅ Это я", "ok:" + requestId));
         row.add(button("❌ Это не я", "no:" + requestId));

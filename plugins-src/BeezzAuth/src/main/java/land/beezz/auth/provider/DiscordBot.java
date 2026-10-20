@@ -294,7 +294,7 @@ public final class DiscordBot implements Provider {
     // ------------------------------------------------------------------ sending
 
     @Override
-    public void sendConfirm(String userId, String nick, String maskedIp, String requestId) {
+    public void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId) {
         JsonArray buttons = new JsonArray();
         buttons.add(button(3, "Это я", "ok:" + requestId));
         buttons.add(button(4, "Это не я", "no:" + requestId));
@@ -303,7 +303,7 @@ public final class DiscordBot implements Provider {
         row.add("components", buttons);
         JsonArray rows = new JsonArray();
         rows.add(row);
-        dm(userId, "🐝 **Вход на BeezzLand**\nНик: `" + nick + "`\nIP: `" + maskedIp + "`\n\nЭто ты?", rows);
+        dm(userId, "🐝 **" + what + "**\nНик: `" + nick + "`\nIP: `" + maskedIp + "`\n\nЭто ты?", rows);
     }
 
     @Override

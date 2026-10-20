@@ -27,7 +27,8 @@ public interface Provider {
 
     void stop();
 
-    void sendConfirm(String userId, String nick, String maskedIp, String requestId);
+    /** «Это ты?» with two buttons; what = «Вход на BeezzLand» (game) or «Вход на сайт BeezzLand». */
+    void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId);
 
     void sendText(String userId, String text);
 }
