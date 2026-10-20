@@ -25,7 +25,7 @@ log() { echo -e "\n=== $*"; }
 
 log "Packages"
 apt-get update -q
-apt-get install -yq curl jq zstd python3 mariadb-server ufw ca-certificates gnupg nginx
+apt-get install -yq curl jq zstd python3 python3-pymysql mariadb-server ufw ca-certificates gnupg nginx
 
 log "Java 25 (Temurin)"
 if ! java -version 2>&1 | grep -q '"25'; then
@@ -115,6 +115,14 @@ sudo -u minecraft python3 "$BASE/scripts/configure.py" "$BASE"
 
 log "Website"
 rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
+# the ban list page reads LibertyBans from our MariaDB; the site's private settings live outside its folder
+python3 - "$BASE/.secrets.json" "$BASE/.site.env" <<'EOF'
+import json, sys, urllib.parse
+s = json.load(open(sys.argv[1]))
+q = lambda v: urllib.parse.quote(str(v), safe="")
+open(sys.argv[2], "w").write(f"BANS_DSN=mysql://{q(s['db_user'])}:{q(s['db_password'])}@127.0.0.1/{q(s['db_name'])}" + chr(10))
+EOF
+chown minecraft:minecraft "$BASE/.site.env" && chmod 600 "$BASE/.site.env"
 SHOWN_IP=${DOMAIN:+play.$DOMAIN}
 SHOWN_IP=${SHOWN_IP:-$(curl -fsS4 https://ifconfig.me || hostname -I | cut -d' ' -f1)}
 sed -i "s|ip: \"localhost\"|ip: \"$SHOWN_IP\"|" "$BASE/site/config.js"

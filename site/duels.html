@@ -109,10 +109,12 @@
   <div class="wrap">
     <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
     <nav>
-      <a href="/">Главная</a>
+      <a class="hide-sm" href="/">Главная</a>
       <a href="map.html">Карта</a>
       <a class="on" href="duels.html">Дуэли</a>
-      <a href="calculator.html">Калькулятор</a>
+      <a href="bans.html">Банлист</a>
+      <a class="hide-sm" href="calculator.html">Калькулятор</a>
+      <a href="profile.html">Кабинет</a>
     </nav>
   </div>
 </header>
@@ -178,10 +180,9 @@
 
 <script>
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  // skin heads by nickname; anyone without a known skin gets Steve
+  // the skin each player has in game (also chosen with /skin); /head/ picks it
   const head = (name, size, cls = "") => `<img class="head ${cls}" width="${size}" height="${size}" loading="lazy" alt=""
-      src="https://mc-heads.net/avatar/${encodeURIComponent(name)}/${size * 2}"
-      onerror="this.onerror=null;this.src='https://mc-heads.net/avatar/MHF_Steve/${size * 2}'">`;
+      src="/head/${encodeURIComponent(name)}/${size * 2}">`;
   const sign = (n) => (n > 0 ? "+" : "") + n;
   const ago = (t) => {
     const m = Math.round((Date.now() - t) / 60000);

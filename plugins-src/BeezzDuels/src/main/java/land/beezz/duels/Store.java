@@ -40,6 +40,9 @@ final class Store {
                     + " b TEXT NOT NULL, b_name TEXT NOT NULL, winner TEXT, kit TEXT NOT NULL, stake INTEGER NOT NULL,"
                     + " prize INTEGER NOT NULL, seconds INTEGER NOT NULL, at INTEGER NOT NULL)");
             s.execute("CREATE INDEX IF NOT EXISTS duels_at ON duels(at)");
+            // the skin each player has in game (also a /skin from SkinsRestorer): the site shows these heads
+            s.execute("CREATE TABLE IF NOT EXISTS skins (uuid TEXT PRIMARY KEY, name TEXT NOT NULL, texture TEXT, updated INTEGER NOT NULL)");
+            s.execute("CREATE INDEX IF NOT EXISTS skins_name ON skins(name COLLATE NOCASE)");
         }
     }
 
@@ -167,6 +170,18 @@ final class Store {
             while (r.next()) out.add(new Top(r.getString(1), 0, 0, r.getLong(2)));
         }
         return out;
+    }
+
+    /** Remembers the skin texture (hash on textures.minecraft.net, null = default skin). */
+    synchronized void skin(UUID id, String name, String texture) throws SQLException {
+        try (PreparedStatement p = db.prepareStatement("INSERT INTO skins(uuid, name, texture, updated) VALUES (?,?,?,?)"
+                + " ON CONFLICT(uuid) DO UPDATE SET name=excluded.name, texture=excluded.texture, updated=excluded.updated")) {
+            p.setString(1, id.toString());
+            p.setString(2, name);
+            p.setString(3, texture);
+            p.setLong(4, System.currentTimeMillis());
+            p.executeUpdate();
+        }
     }
 
     private void ensure(UUID id, String name) throws SQLException {

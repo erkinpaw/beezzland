@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Банлист — BeezzLand</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Press+Start+2P&display=swap&subset=cyrillic" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search), t = q.get("theme");
+      try {
+        if (!t) t = localStorage.getItem("beezz-theme");
+        else if (!q.has("preview")) localStorage.setItem("beezz-theme", t);
+      } catch (e) {}
+      if (t && t !== "hive" && /^[a-z]+$/.test(t)) {
+        document.documentElement.dataset.theme = t;
+        document.write('<link rel="stylesheet" href="themes/' + t + '.css">');
+      }
+    })();
+  </script>
+  <style>
+    .page { padding-top: 40px; }
+    .panel { background: linear-gradient(180deg, var(--surface), var(--bg-2)); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+    .bar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+    .bar input { flex: 1; min-width: 180px; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); font: 600 15px var(--body); }
+    .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+    .seg button { border: 0; background: none; color: var(--muted); font: 600 14px var(--body); padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+    .seg button.on { background: var(--honey); color: #111; }
+    .head { image-rendering: pixelated; border-radius: 6px; background: var(--surface-2); flex: none; vertical-align: middle; }
+    .item { display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border); }
+    .item:first-child { border-top: 0; }
+    .item .head.v { width: 44px; height: 44px; }
+    .item.gone .head.v { filter: grayscale(1) brightness(.7); }
+    .item .who { font-weight: 800; }
+    .item .why { margin-top: 2px; }
+    .item .meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .item .meta .head { width: 18px; height: 18px; margin: 0 4px 0 2px; border-radius: 4px; }
+    .kind { font: 10px var(--pixel); padding: 4px 7px; border-radius: 6px; margin-left: 8px; vertical-align: 2px; }
+    .kind.ban { background: rgba(248,113,113,.18); color: var(--bad); } .kind.mute { background: rgba(147,197,253,.15); color: var(--blue-3); }
+    .state { font-size: 13px; font-weight: 700; text-align: right; white-space: nowrap; }
+    .state.on { color: var(--bad); } .state.off { color: var(--muted); }
+    .state small { display: block; font-weight: 600; color: var(--muted); }
+    .empty { color: var(--muted); padding: 10px 0; }
+    .count { color: var(--muted); font-size: 14px; margin-left: auto; }
+    @media (max-width: 560px) { .item { grid-template-columns: 36px 1fr; } .item .head.v { width: 36px; height: 36px; } .state { grid-column: 2; text-align: left; } }
+  </style>
+</head>
+<body>
+<div class="hive"></div>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/"><img class="px" src="assets/bee.svg" alt=""><span>Beezz<b>Land</b></span></a>
+    <nav>
+      <a class="hide-sm" href="/">Главная</a>
+      <a href="map.html">Карта</a>
+      <a href="duels.html">Дуэли</a>
+      <a class="on" href="bans.html">Банлист</a>
+      <a class="hide-sm" href="calculator.html">Калькулятор</a>
+      <a href="profile.html">Кабинет</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+  <h2>Банлист</h2>
+  <p class="sub">Все баны и муты сервера: кто, за что и до какого числа. Не согласен с наказанием — напиши тикет в Discord (#жалобы).</p>
+  <div class="panel">
+    <div class="bar">
+      <input data-q placeholder="Поиск по нику или причине">
+      <div class="seg" data-type><button class="on" data-v="all">Все</button><button data-v="ban">Баны</button><button data-v="mute">Муты</button></div>
+      <div class="seg" data-state><button data-v="active">Действуют</button><button class="on" data-v="all">Вся история</button></div>
+    </div>
+    <div data-list><div class="empty">Загружаем…</div></div>
+  </div>
+</main>
+
+<script>
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const head = (name, size) => `/head/${encodeURIComponent(name)}/${size * 2}`;
+  const date = (t) => new Date(t).toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  const left = (t) => {
+    const h = Math.round((t - Date.now()) / 3600000);
+    return h < 24 ? `ещё ${Math.max(1, h)} ч` : `ещё ${Math.round(h / 24)} дн.`;
+  };
+  let items = [], type = "all", state = "all";
+
+  function render() {
+    const q = $("[data-q]").value.trim().toLowerCase();
+    const list = items.filter((x) => (type === "all" || x.type === type) && (state === "all" || x.active)
+      && (!q || x.name.toLowerCase().includes(q) || x.reason.toLowerCase().includes(q)));
+    $("[data-list]").innerHTML = list.length ? list.map((x) => `<div class="item${x.active ? "" : " gone"}">
+      <img class="head v" src="${head(x.name, 44)}" width="44" height="44" alt="">
+      <div><div class="who">${esc(x.name)}<span class="kind ${x.type}">${x.type === "ban" ? "БАН" : "МУТ"}</span></div>
+        <div class="why">${esc(x.reason || "без причины")}</div>
+        <div class="meta">${date(x.start)} · выдал ${x.by === "Консоль" ? "сервер" : `<img class="head" src="${head(x.by, 18)}" width="18" height="18" alt="">${esc(x.by)}`}</div></div>
+      <div class="state ${x.active ? "on" : "off"}">${x.active ? (x.end ? left(x.end) : "навсегда") : "закончился"}
+        <small>${x.end ? "до " + date(x.end) : x.active ? "" : "снят"}</small></div></div>`).join("")
+      : `<div class="empty">${items.length ? "Ничего не нашлось." : "Банов пока нет — так держать!"}</div>`;
+  }
+
+  for (const [sel, set] of [["[data-type]", (v) => (type = v)], ["[data-state]", (v) => (state = v)]]) {
+    $(sel).onclick = (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      $(sel).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      set(b.dataset.v);
+      render();
+    };
+  }
+  $("[data-q]").oninput = render;
+
+  fetch("/api/bans", { cache: "no-store" }).then((r) => { if (!r.ok) throw 0; return r.json(); })
+    .then((d) => { items = d.items; render(); })
+    .catch(() => ($("[data-list]").innerHTML = '<div class="empty">Банлист сейчас недоступен.</div>'));
+</script>
+</body>
+</html>

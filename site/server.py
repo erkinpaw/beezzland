@@ -1,6 +1,8 @@
 """BeezzLand site: static files + /api/status (live server ping) + /map/ (proxy to Pl3xMap)
 + /webtrade/calculator.html (the price calculator WebTrade exports with current prices)
-+ /api/duels (top, last fights and kits that BeezzDuels exports to duels.json).
++ /api/duels (top, last fights and kits that BeezzDuels exports to duels.json)
++ /head/<nick>/<size> (skin head as chosen in game, also /skin) + /api/login, /api/me, /api/logout
+  (personal page, login with «Это я» in the bot) + /api/bans (LibertyBans), see account.py.
 
 Usage: python server.py [--port 8080] [--mc 127.0.0.1:25565] [--map 127.0.0.1:8100]
                         [--webtrade /opt/mc/survival/plugins/WebTrade]
@@ -8,7 +10,12 @@ Usage: python server.py [--port 8080] [--mc 127.0.0.1:25565] [--map 127.0.0.1:81
 On the VPS nginx can take over static files and /map/; this script is enough to start.
 """
 import argparse, json, os, socket, struct, time, urllib.error, urllib.request
+from http.cookies import SimpleCookie
+import sys
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # run with -I: our own modules are still found
+import account  # noqa: E402
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 HOP = {"connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "proxy-authenticate",
@@ -55,7 +62,83 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *a, **kw):
         super().__init__(*a, directory=ROOT, **kw)
 
+    # ---------------------------------------------------------------- accounts
+
+    def client_ip(self):
+        # behind nginx the real address comes in X-Forwarded-For (only trusted from localhost)
+        fwd = self.headers.get("X-Forwarded-For", "")
+        if fwd and self.client_address[0] in ("127.0.0.1", "::1"):
+            return fwd.split(",")[0].strip()
+        return self.client_address[0]
+
+    def token(self):
+        c = SimpleCookie(self.headers.get("Cookie", ""))
+        return c["bz"].value if "bz" in c else None
+
+    def json_reply(self, code, obj, cookie=None):
+        data = json.dumps(obj, ensure_ascii=False).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Cache-Control", "no-store")
+        if cookie is not None:
+            secure = "; Secure" if self.headers.get("X-Forwarded-Proto") == "https" else ""
+            age = account.SESSION_LIFE if cookie else 0
+            self.send_header("Set-Cookie", f"bz={cookie}; Path=/; Max-Age={age}; HttpOnly; SameSite=Lax{secure}")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_POST(self):
+        path = self.path.split("?")[0]
+        try:
+            body = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4096)) or b"{}")
+        except ValueError:
+            body = {}
+        if path == "/api/login":
+            name = str(body.get("name", "")).strip()
+            if not name or len(name) > 32 or not all(ch.isalnum() or ch in "_." for ch in name):
+                return self.json_reply(400, {"error": "bad_name"})
+            code, r = account.login_start(name, self.client_ip())
+            return self.json_reply(code, r)
+        if path == "/api/logout":
+            account.end_session(self.token(), everywhere=bool(body.get("all")))
+            return self.json_reply(200, {"ok": True}, cookie="")
+        self.send_error(404)
+
+    def account_get(self, path, query):
+        if path.startswith("/head/"):
+            parts = path[len("/head/"):].split("/")
+            size = int(parts[1]) if len(parts) > 1 and parts[1].isdigit() else 64
+            self.send_response(302)
+            self.send_header("Location", account.head_url(urllib.parse.unquote(parts[0]), size))
+            self.send_header("Cache-Control", "max-age=300")  # a new /skin shows up within minutes
+            self.end_headers()
+            return True
+        if path == "/api/login/status":
+            r = account.login_status(query.get("request", ""))
+            if r.get("state") == "approved":
+                return self.json_reply(200, r, cookie=account.new_session(r["name"], self.client_ip())) or True
+            return self.json_reply(200, r) or True
+        if path == "/api/me":
+            name = account.session_name(self.token())
+            if not name:
+                return self.json_reply(401, {"error": "login"}) or True
+            return self.json_reply(200, account.profile(name)) or True
+        if path == "/api/bans":
+            try:
+                rows = account.bans()
+            except Exception as e:  # database down: say so instead of a broken page
+                print("bans:", e)
+                rows = None
+            if rows is None:
+                return self.json_reply(503, {"error": "bans_unavailable"}) or True
+            return self.json_reply(200, {"updated": int(time.time() * 1000), "items": rows}) or True
+        return False
+
     def do_GET(self):
+        path, _, qs = self.path.partition("?")
+        if self.account_get(path, dict(urllib.parse.parse_qsl(qs))):
+            return
         if self.path.startswith("/api/status"):
             try:
                 body = ping(*MC)
@@ -165,9 +248,15 @@ if __name__ == "__main__":
     ap.add_argument("--map", default="127.0.0.1:8100")
     ap.add_argument("--webtrade", default="/opt/mc/survival/plugins/WebTrade")
     ap.add_argument("--duels", default="/opt/mc/survival/plugins/BeezzDuels/duels.json")
+    ap.add_argument("--db", default="/opt/mc/survival/plugins/BeezzDuels/zhuzhiki.db", help="BeezzDuels database (read only)")
+    ap.add_argument("--auth", default="http://127.0.0.1:8766", help="BeezzAuth local API")
+    ap.add_argument("--auth-secret", default="/opt/mc/proxy/plugins/beezzauth/api-secret.txt")
+    ap.add_argument("--sessions", default=os.path.join(ROOT, "..", "sessions.json"), help="logged-in sessions (token hashes)")
+    ap.add_argument("--bans", default=os.environ.get("BANS_DSN", ""), help="mysql://user:pass@localhost/db of LibertyBans")
     a = ap.parse_args()
     WEBTRADE = a.webtrade
     DUELS = a.duels
+    account.setup(a.db, a.auth, a.auth_secret, a.sessions, a.bans)
     MC = (a.mc.split(":")[0], int(a.mc.split(":")[1]))
     MAP = (a.map.split(":")[0], int(a.map.split(":")[1]))
     print(f"BeezzLand site: http://localhost:{a.port}  (minecraft {a.mc}, map {a.map})")

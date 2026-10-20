@@ -121,6 +121,8 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         getCommand("жужики").setExecutor(this);
         getCommand("жужики").setTabCompleter(this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::export, 40L, 600L);
+        // skins can change any time (/skin): look at online players once a minute, only changes hit the database
+        getServer().getScheduler().runTaskTimer(this, () -> Bukkit.getOnlinePlayers().forEach(this::recordSkin), 200L, 1200L);
         getLogger().info("Duels ready: " + c.getInt("duel.arenas", 8) + " arenas, commission " + commission + "%");
     }
 
@@ -501,6 +503,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        getServer().getScheduler().runTaskLater(this, () -> recordSkin(p), 100L); // SkinsRestorer applies the skin right after join
         getServer().getScheduler().runTask(this, () -> {
             if (pending(p).exists()) {
                 restore(p); // left (or the server stopped) in the middle of a duel
@@ -519,7 +522,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
                 dirty = true;
                 getServer().getScheduler().runTaskLater(this, () -> {
                     if (p.isOnline()) say(p, "<#34D399>+" + d.reward() + " жужиков</#34D399> <gray>за вход"
-                            + (d.streak() > 1 ? " — " + d.streak() + " дней подряд!" : ". Заходи завтра — будет больше."));
+                            + (d.streak() > 1 ? " — " + d.streak() + " " + days(d.streak()) + " подряд!" : ". Заходи завтра — будет больше."));
                 }, 60L);
             } catch (Exception ex) {
                 getLogger().warning("daily reward for " + name + ": " + ex);
@@ -654,10 +657,38 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         }
     }
 
+    // ------------------------------------------------------------------ skins
+
+    private final Map<UUID, String> knownSkin = new HashMap<>();
+
+    /** The texture in the player's profile — whatever SkinsRestorer (/skin) or Mojang put there. */
+    private void recordSkin(Player p) {
+        if (!p.isOnline()) return;
+        String texture = Skins.texture(p.getPlayerProfile());
+        String key = texture == null ? "" : texture;
+        if (key.equals(knownSkin.get(p.getUniqueId()))) return;
+        knownSkin.put(p.getUniqueId(), key);
+        UUID id = p.getUniqueId();
+        String name = p.getName();
+        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+            try {
+                store.skin(id, name, texture);
+            } catch (Exception e) {
+                getLogger().warning("cannot save skin of " + name + ": " + e);
+            }
+        });
+    }
+
     // ------------------------------------------------------------------ helpers
 
     private File pending(Player p) {
         return new File(pendingDir, p.getUniqueId() + ".yml");
+    }
+
+    /** 1 день, 2 дня, 5 дней. */
+    static String days(int n) {
+        int m10 = n % 10, m100 = n % 100;
+        return m10 == 1 && m100 != 11 ? "день" : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? "дня" : "дней";
     }
 
     private static void say(Player p, String mini) {
