@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "land.beezz"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.3.build.+")
+    compileOnly("net.luckperms:api:5.4")
 }
 
 java {

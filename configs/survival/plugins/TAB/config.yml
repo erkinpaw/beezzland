@@ -5,13 +5,14 @@ header-footer:
     default:
       header:
         - ""
-        - "<#FACC15>&lBEEZZ</#FDE047><#60A5FA>&lLAND</#93C5FD>"
+        - ""
+        - ""
         - "&7ванильное выживание &8• &f26.3"
         - ""
       footer:
         - ""
         - "&7Онлайн &e%online%&8/&e100  &8•  &7Пинг %condition:ping%  &8•  &7TPS %condition:tps%"
-        - "&7Карта мира и правила — &bbeezzland.ru"
+        - "&7Карта, правила и ранги — &#93C5FDbeezzland.com"
         - ""
 
 # https://github.com/NEZNAMY/TAB/wiki/Feature-guide:-Tablist-name-formatting
@@ -25,7 +26,7 @@ scoreboard-teams:
   enable-collision: true
   invisible-nametags: false
   sorting-types:
-    - "GROUPS:owner,admin,moder,helper,default"
+    - "GROUPS:owner,admin,moder,helper,diamond,gold,silver,default"
     - "PLACEHOLDER_A_TO_Z:%player%"
   case-sensitive-sorting: false
   can-see-friendly-invisibles: false

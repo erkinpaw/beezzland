@@ -10,25 +10,57 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.time.Duration;
 import java.util.List;
 
-/** Small things every BeezzLand player meets: the first-join welcome, /rules, /links and chat tips. */
+/**
+ * Small things every BeezzLand player meets: the first-join welcome, /rules, /links, chat tips,
+ * the rank badge + player card on the nick, the AFK limit and the own-discs limit.
+ */
 public final class BeezzCore extends JavaPlugin implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
     private BukkitTask tipsTask;
     private int nextTip;
+    private Profiles profiles;
+    private AfkGuard afk;
+    private DiscLimit discs;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this, this);
+        profiles = new Profiles(this);
+        afk = new AfkGuard(this);
+        discs = new DiscLimit(this);
+        getServer().getPluginManager().registerEvents(profiles, this);
+        getServer().getPluginManager().registerEvents(afk, this);
+        getServer().getPluginManager().registerEvents(discs, this);
+        profiles.start();
+        afk.start();
         startTips();
+    }
+
+    @Override
+    public void onDisable() {
+        if (profiles != null) profiles.stop();
+    }
+
+    /** Join/quit lines with the badge and the hover card instead of vanilla's yellow text. */
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onJoinMessage(PlayerJoinEvent e) {
+        e.joinMessage(MM.deserialize("<dark_gray>[<#34D399>+</#34D399>]</dark_gray> ").append(e.getPlayer().displayName()));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onQuitMessage(PlayerQuitEvent e) {
+        e.quitMessage(MM.deserialize("<dark_gray>[<#F87171>-</#F87171>]</dark_gray> ").append(e.getPlayer().displayName()));
     }
 
     private Component text(String line, Player player) {
@@ -85,9 +117,18 @@ public final class BeezzCore extends JavaPlugin implements Listener {
         switch (command.getName()) {
             case "rules" -> send(sender, getConfig().getStringList("rules"), p);
             case "links" -> send(sender, getConfig().getStringList("links"), p);
+            case "discs" -> discs.show(sender);
             case "beezzcore" -> {
+                if (args.length == 3 && args[0].equalsIgnoreCase("afk")) { // /beezzcore afk <player> <minutes>: test hook
+                    Player t = Bukkit.getPlayerExact(args[1]);
+                    if (t == null) { sender.sendMessage("no such player"); return true; }
+                    afk.setAfkFor(t, Long.parseLong(args[2]));
+                    sender.sendMessage(t.getName() + " is now AFK for " + args[2] + " min");
+                    return true;
+                }
                 reloadConfig();
                 startTips();
+                Bukkit.getOnlinePlayers().forEach(profiles::apply);
                 sender.sendMessage(MM.deserialize("<#FACC15>BeezzCore:</#FACC15> <gray>config.yml перечитан."));
             }
             default -> { return false; }

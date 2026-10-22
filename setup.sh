@@ -109,12 +109,13 @@ if [[ ! -f $BASE/survival/config/paper-global.yml || ! -f $BASE/proxy/forwarding
 fi
 
 log "Configure"
+# the site goes in first: configure.py reads the resource pack from it to set its SHA-1
+rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
 # our own plugin configs (TAB look, etc.) on top of the generated defaults
 cp -r "$SRC/configs/." "$BASE/" && chown -R minecraft:minecraft "$BASE"
 sudo -u minecraft python3 "$BASE/scripts/configure.py" "$BASE"
 
 log "Website"
-rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
 # the ban list page reads LibertyBans from our MariaDB; the site's private settings live outside its folder
 python3 - "$BASE/.secrets.json" "$BASE/.site.env" <<'EOF'
 import json, sys, urllib.parse
@@ -139,7 +140,7 @@ log "Firewall"
 ufw allow OpenSSH
 ufw allow 'Nginx Full' comment 'Website (80/443)'
 ufw allow 25565/tcp comment 'Minecraft (Velocity)'
-ufw allow 24454/udp comment 'Simple Voice Chat'
+ufw allow 25565/udp comment 'Plasmo Voice (voice goes through the proxy port)'
 if [[ $BEDROCK == 1 ]]; then ufw allow 19132/udp comment "Bedrock (Geyser)"; fi
 ufw --force enable
 

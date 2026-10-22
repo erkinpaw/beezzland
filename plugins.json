@@ -46,8 +46,20 @@
       "why": "чат: префиксы рангов, локальный (100 блоков) и глобальный (!) каналы, ЛС"
     },
     {
-      "slug": "simple-voice-chat",
-      "why": "голосовой чат рядом с игроком (нужен мод у игрока, UDP 24454)"
+      "slug": "plasmo-voice",
+      "why": "голосовой чат (Plasmo Voice — его используют на большинстве русскоязычных серверов; у игрока мод Plasmo Voice)"
+    },
+    {
+      "slug": "packetevents",
+      "why": "библиотека для pv-addon-discs"
+    },
+    {
+      "slug": "pv-addon-lavaplayer-lib",
+      "why": "библиотека для pv-addon-discs (загрузка звука по ссылке)"
+    },
+    {
+      "slug": "pv-addon-discs",
+      "why": "свои пластинки: /disc burn <ссылка> (лимит по донату: Silver 3, Gold 5, Diamond 7 за сезон)"
     }
   ],
   "proxy": [
@@ -66,6 +78,10 @@
     {
       "slug": "viabackwards",
       "why": "вход со старых версий клиента"
+    },
+    {
+      "slug": "plasmo-voice",
+      "why": "Plasmo Voice на прокси: принимает голос игроков (UDP на том же порту, что и игра) и передаёт серверу"
     }
   ],
   "later": [

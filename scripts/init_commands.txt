@@ -1,6 +1,7 @@
 # One-time console commands for BeezzLand (ranks, game rules), one per line.
 #   setup.sh runs them automatically; to re-run by hand paste them into the server console.
-# Prefix colors: owner = honey, admin = red, moder = sky blue, helper = green, players = white.
+# Prefixes are badge glyphs from the resource pack (scripts/make_pack.py) + the nick colour.
+# Rank limits live in LuckPerms meta: afk-hours (default 2), discs per season (default 0).
 lp creategroup owner
 lp creategroup admin
 lp creategroup moder
@@ -12,11 +13,17 @@ lp group helper setweight 50
 lp group owner parent add admin
 lp group admin parent add moder
 lp group moder parent add helper
-lp group owner meta setprefix 100 "&8[&#FACC15Владелец&8] &#FDE047"
-lp group admin meta setprefix 90 "&8[&#F87171Админ&8] &f"
-lp group moder meta setprefix 70 "&8[&#60A5FAМодер&8] &f"
-lp group helper meta setprefix 50 "&8[&#34D399Хелпер&8] &f"
+lp group owner meta setprefix 100 " &#FDE047"
+lp group admin meta setprefix 90 " &#FCA5A5"
+lp group moder meta setprefix 70 " &#93C5FD"
+lp group helper meta setprefix 50 " &#6EE7B7"
 lp group default meta setprefix 1 "&f"
+lp group owner meta set rank-title "Владелец"
+lp group admin meta set rank-title "Админ"
+lp group moder meta set rank-title "Модер"
+lp group helper meta set rank-title "Хелпер"
+lp group helper meta set afk-hours 12
+lp group helper meta set discs 7
 lp group owner permission set * true
 lp group admin permission set worldedit.* true
 lp group admin permission set worldguard.* true
@@ -30,6 +37,7 @@ lp group moder permission set libertybans.warn.* true
 lp group moder permission set libertybans.kick.* true
 lp group moder permission set libertybans.list.* true
 lp group moder permission set coreprotect.* true
+lp group helper permission set libertybans.commands true
 lp group helper permission set libertybans.mute.do.target.uuid true
 lp group helper permission set libertybans.mute.do.time.duration.1h true
 lp group helper permission set libertybans.warn.do.target.uuid true
@@ -40,3 +48,34 @@ lp group default permission set carbon.channel.local.speak true
 lp group default permission set carbon.channel.global.see true
 lp group default permission set carbon.channel.global.speak true
 gamerule players_sleeping_percentage 50
+# donor ranks (cosmetic only, per season): badge, nick colour, AFK time, own music discs
+lp creategroup silver
+lp creategroup gold
+lp creategroup diamond
+lp group silver setweight 20
+lp group gold setweight 30
+lp group diamond setweight 40
+lp group silver meta setprefix 20 " &#E2E8F0"
+lp group gold meta setprefix 30 " &#FCD34D"
+lp group diamond meta setprefix 40 " &#67E8F9"
+lp group silver meta set rank-title "Silver"
+lp group gold meta set rank-title "Gold"
+lp group diamond meta set rank-title "Diamond"
+lp group silver meta set afk-hours 4
+lp group gold meta set afk-hours 8
+lp group diamond meta set afk-hours 12
+lp group silver meta set discs 3
+lp group gold meta set discs 5
+lp group diamond meta set discs 7
+lp group default meta set rank-title "Игрок"
+lp group default meta set afk-hours 2
+lp group default meta set discs 0
+lp group default permission set pv.addon.discs.play true
+lp group silver permission set pv.addon.discs.burn true
+lp group silver permission set pv.addon.discs.erase true
+lp group silver permission set pv.addon.discs.search true
+lp group gold parent add silver
+lp group diamond parent add gold
+lp group helper permission set pv.addon.discs.burn true
+lp group helper permission set pv.addon.discs.erase true
+lp group helper permission set pv.addon.discs.search true

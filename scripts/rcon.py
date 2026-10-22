@@ -20,7 +20,7 @@ def packet(sock, rid, kind, body):
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     s = json.load(open(os.path.join(BASE, ".secrets.json")))
-    with socket.create_connection(("127.0.0.1", 25575), timeout=30) as sock:
+    with socket.create_connection(("127.0.0.1", int(s.get("rcon_port", 25575))), timeout=30) as sock:
         if packet(sock, 1, 3, s["rcon_password"])[0] == -1:
             raise SystemExit("rcon auth failed")
         for cmd in sys.argv[1:]:

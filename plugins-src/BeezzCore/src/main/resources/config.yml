@@ -47,3 +47,25 @@ tips:
     - "<gray>Пиши <#FACC15>!</#FACC15> перед сообщением, чтобы его увидел весь сервер, а не только соседи."
     - "<gray>Ночь проходит, когда спит половина игроков онлайн — ложись спать вместе со всеми."
     - "<gray>Голосуй за сервер на мониторингах — это помогает BeezzLand расти!"
+
+card:
+  # «порядочность»: 100 минус штрафы за нарушения из LibertyBans; старые нарушения со временем «прощаются»
+  weights: {warn: 10, mute: 20, ban: 40, kick: 5}
+  half-life-days: 30          # через столько дней нарушение весит вдвое меньше
+  footer: "<dark_gray>Нажми на ник, чтобы написать в личку"
+
+database:
+  # LibertyBans хранит наказания в MariaDB — карточка читает их оттуда (заполняет configure.py)
+  url: ""
+  user: ""
+  password: ""
+
+afk:
+  # сколько часов можно стоять AFK; у рангов своё значение (мета LuckPerms afk-hours): Silver 4, Gold 8, Diamond 12
+  default-hours: 2
+  warn-minutes: 5
+  warn: "<#FBBF24>Ты давно AFK.</#FBBF24> <gray>Пошевелись, иначе через {minutes} мин кикнет."
+  kick: "<#FACC15><bold>BeezzLand</bold></#FACC15>
+
+<gray>Ты стоял AFK дольше <white>{hours} ч</white>.
+<gray>Дольше можно с рангами <#CBD5E1>Silver</#CBD5E1>, <#FBBF24>Gold</#FBBF24> и <#67E8F9>Diamond</#67E8F9>."

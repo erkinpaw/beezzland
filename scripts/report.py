@@ -27,7 +27,7 @@ def strip(s):
 
 def server_now():
     s = json.load(open(os.path.join(BASE, ".secrets.json")))
-    with socket.create_connection(("127.0.0.1", 25575), timeout=10) as sock:
+    with socket.create_connection(("127.0.0.1", int(s.get("rcon_port", 25575))), timeout=10) as sock:
         rcon.packet(sock, 1, 3, s["rcon_password"])
         out = {c: strip(rcon.packet(sock, 2, 2, c)[1]) for c in ("list", "tps", "mspt", "beezz status")}
     online = re.search(r"(\d+) of a max of (\d+)", out["list"])

@@ -9,6 +9,12 @@ import json, os, re, sys
 BASE = sys.argv[1]
 S = json.load(open(os.path.join(BASE, ".secrets.json")))
 PROXY = os.path.join(BASE, "proxy")
+DB_PORT = int(S.get("db_port", 3306))  # MariaDB on the same machine; tests use another port
+# ports default to production; a local test environment overrides them in .secrets.json
+PROXY_PORT = int(S.get("proxy_port", 25565))
+BACKEND_PORT = int(S.get("backend_port", 25566))
+RCON_PORT = int(S.get("rcon_port", 25575))
+MAP_PORT = int(S.get("map_port", 8100))
 SURV = os.path.join(BASE, "survival")
 
 
@@ -50,6 +56,23 @@ def yaml_set(text, path, value):
     raise KeyError(".".join(path))
 
 
+def toml_set(text, section, key, value):
+    """Set `key = value` in a TOML [section] (None = top level, before the first section)."""
+    lines = text.split("\n")
+    inside = section is None
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("[") and not stripped.startswith("[["):
+            if inside and section is None:
+                break
+            inside = stripped == f"[{section}]"
+            continue
+        if inside and re.match(rf"^{re.escape(key)}\s*=", stripped):
+            lines[i] = f"{key} = {value}"
+            return "\n".join(lines)
+    raise KeyError(f"{section}.{key}")
+
+
 def q(s):
     return "'" + str(s).replace("'", "''") + "'"
 
@@ -73,24 +96,24 @@ def main():
     # --- Velocity ---
     p = os.path.join(PROXY, "velocity.toml")
     t = read(p)
-    t = re.sub(r'(?m)^bind = .*$', 'bind = "0.0.0.0:25565"', t)
+    t = re.sub(r'(?m)^bind = .*$', f'bind = "0.0.0.0:{PROXY_PORT}"', t)
     t = re.sub(r'(?m)^online-mode = .*$', f'online-mode = {str(online).lower()}', t)
     t = re.sub(r'(?m)^player-info-forwarding-mode = .*$', 'player-info-forwarding-mode = "modern"', t)
     t = re.sub(r'(?m)^motd = .*$', f'motd = "{S["motd"]}"', t)
     t = re.sub(r'(?m)^show-max-players = .*$', 'show-max-players = 100', t)
     t = re.sub(r'(?ms)^\[servers\].*?(?=^\[forced-hosts\])',
-               '[servers]\nsurvival = "127.0.0.1:25566"\ntry = ["survival"]\n\n', t)
+               f'[servers]\nsurvival = "127.0.0.1:{BACKEND_PORT}"\ntry = ["survival"]\n\n', t)
     t = re.sub(r'(?ms)^\[forced-hosts\].*?(?=^\[advanced\])', '[forced-hosts]\n\n', t)
     write(p, t)
 
     # --- Purpur / Paper ---
     props(os.path.join(SURV, "server.properties"), {
         "server-ip": "127.0.0.1",
-        "server-port": "25566",
+        "server-port": str(BACKEND_PORT),
         "online-mode": "false",          # Velocity does the auth
         "enforce-secure-profile": str(online).lower(),  # chat signing needs Mojang accounts
         "enable-rcon": "true",
-        "rcon.port": "25575",
+        "rcon.port": str(RCON_PORT),
         "rcon.password": S["rcon_password"],
         "max-players": "100",            # default is 20; Velocity shows 100 slots
         "view-distance": "8",
@@ -116,7 +139,7 @@ def main():
               os.path.join(PROXY, "plugins", "luckperms", "config.yml")):
         t = read(p)
         t = yaml_set(t, ["storage-method"], "mariadb")
-        t = yaml_set(t, ["data", "address"], "localhost")
+        t = yaml_set(t, ["data", "address"], f"localhost:{DB_PORT}")
         t = yaml_set(t, ["data", "database"], S["db_name"])
         t = yaml_set(t, ["data", "username"], S["db_user"])
         t = yaml_set(t, ["data", "password"], q(S["db_password"]))
@@ -127,6 +150,7 @@ def main():
     t = read(p)
     t = yaml_set(t, ["rdms-vendor"], "'MARIADB'")
     t = yaml_set(t, ["auth-details", "host"], "'localhost'")
+    t = yaml_set(t, ["auth-details", "port"], str(DB_PORT))
     t = yaml_set(t, ["auth-details", "database"], q(S["db_name"]))
     t = yaml_set(t, ["auth-details", "user"], q(S["db_user"]))
     t = yaml_set(t, ["auth-details", "password"], q(S["db_password"]))
@@ -162,9 +186,11 @@ def main():
     t = re.sub(r'(?m)^default-locale=.*$', 'default-locale="ru_RU"', t)
     t = re.sub(r'(?m)^default-channel=.*$', 'default-channel="carbon:local"', t)
     t = re.sub(r'(?m)^storage-type=.*$', 'storage-type=MYSQL', t)
+    # BeezzCore owns the display name (badge, colour, hover card); Carbon must not overwrite it
+    t = re.sub(r'(?m)^(\s*)use-carbon-nicknames=.*$', r'\1use-carbon-nicknames=false', t)
     head, sep, rest = t.partition("database-settings {")
     db, close, tail = rest.partition("connection-pool {")  # url/username/password sit before the pool block
-    db = re.sub(r'(?m)^(\s*)url=.*$', lambda m: f'{m.group(1)}url="jdbc:mysql://localhost:3306/{S["db_name"]}"', db, count=1)
+    db = re.sub(r'(?m)^(\s*)url=.*$', lambda m: f'{m.group(1)}url="jdbc:mysql://localhost:{DB_PORT}/{S["db_name"]}"', db, count=1)
     db = re.sub(r'(?m)^(\s*)username=.*$', lambda m: f'{m.group(1)}username="{S["db_user"]}"', db, count=1)
     db = re.sub(r'(?m)^(\s*)password=.*$', lambda m: f'{m.group(1)}password="{S["db_password"]}"', db, count=1)
     write(p, head + sep + db + close + tail)
@@ -180,16 +206,43 @@ def main():
     if os.path.exists(p):
         write(p, yaml_set(read(p), ["site"], q(S.get("site_url", "https://beezzland.ru"))))
 
-    # --- Simple Voice Chat: Purpur listens on localhost only, voice UDP must be public ---
-    p = os.path.join(SURV, "plugins", "voicechat", "voicechat-server.properties")
+    # --- BeezzCore: the player card reads LibertyBans history from MariaDB ---
+    p = os.path.join(SURV, "plugins", "BeezzCore", "config.yml")
     if os.path.exists(p):
-        props(p, {"port": "24454", "bind_address": "*"})
+        t = read(p)
+        if not re.search(r"(?m)^database:", t):  # config from an older BeezzCore: add the section
+            t = t.rstrip("\n") + '\ndatabase:\n  url: ""\n  user: ""\n  password: ""\n'
+        t = yaml_set(t, ["database", "url"], q(f"jdbc:mysql://localhost:{DB_PORT}/{S['db_name']}?useSSL=false&allowPublicKeyRetrieval=true"))
+        t = yaml_set(t, ["database", "user"], q(S["db_user"]))
+        t = yaml_set(t, ["database", "password"], q(S["db_password"]))
+        write(p, t)
+
+    # --- Required resource pack (logo + rank badges), served by our site ---
+    pack = os.path.join(BASE, "site", "pack", "beezzland-pack.zip")
+    if os.path.exists(pack):
+        import hashlib
+        props(os.path.join(SURV, "server.properties"), {
+            "resource-pack": S.get("site_url", "https://beezzland.com") + "/pack/beezzland-pack.zip",
+            "resource-pack-sha1": hashlib.sha1(open(pack, "rb").read()).hexdigest(),
+            "require-resource-pack": "true",
+            "resource-pack-prompt": '{"text":"Ресурспак BeezzLand: логотип и значки рангов (несколько КБ). Без него зайти нельзя.","color":"yellow"}',
+        })
+
+    # --- Plasmo Voice: players' voice goes to the proxy (UDP on the game port), the proxy talks
+    # to the server's voice port on localhost; Russian texts for clients without a translation ---
+    p = os.path.join(SURV, "plugins", "PlasmoVoice", "config.toml")
+    if os.path.exists(p):
+        t = toml_set(read(p), None, "default_language", '"ru_ru"')
+        write(p, toml_set(t, "host", "ip", '"127.0.0.1"'))
+    p = os.path.join(PROXY, "plugins", "plasmovoice", "config.toml")
+    if os.path.exists(p):
+        write(p, toml_set(read(p), None, "default_language", '"ru_ru"'))
 
     # --- CoreProtect (only writes its config once it supports the server version) ---
     p = os.path.join(SURV, "plugins", "CoreProtect", "config.yml")
     if os.path.exists(p):
         t = read(p)
-        for k, v in {"use-mysql": "true", "mysql-host": "127.0.0.1", "mysql-port": "3306",
+        for k, v in {"use-mysql": "true", "mysql-host": "127.0.0.1", "mysql-port": str(DB_PORT),
                      "mysql-database": S["db_name"], "mysql-username": S["db_user"],
                      "mysql-password": q(S["db_password"])}.items():
             t = yaml_set(t, [k], v)
@@ -202,7 +255,7 @@ def main():
     if os.path.exists(p):
         t = read(p)
         t = yaml_set(t, ["settings", "internal-webserver", "bind"], "127.0.0.1")
-        t = yaml_set(t, ["settings", "internal-webserver", "port"], "8100")
+        t = yaml_set(t, ["settings", "internal-webserver", "port"], str(MAP_PORT))
         t = yaml_set(t, ["settings", "web-address"], q(S.get("site_url", "https://beezzland.ru") + "/map/"))
         t = yaml_set(t, ["settings", "performance", "render-threads"], "2")  # default -1 = half the cores
         # by default it calls System.gc() while/after rendering: 300-450 ms full-GC pauses under load
