@@ -76,6 +76,9 @@ lp group silver permission set pv.addon.discs.erase true
 lp group silver permission set pv.addon.discs.search true
 lp group gold parent add silver
 lp group diamond parent add gold
+# ranks replace "default" when given with parent set, so they must carry its permissions (chat channels, discs play…)
+lp group silver parent add default
+lp group helper parent add default
 lp group helper permission set pv.addon.discs.burn true
 lp group helper permission set pv.addon.discs.erase true
 lp group helper permission set pv.addon.discs.search true

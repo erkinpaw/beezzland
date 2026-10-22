@@ -42,6 +42,7 @@ public final class BeezzCore extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(profiles, this);
         getServer().getPluginManager().registerEvents(afk, this);
         getServer().getPluginManager().registerEvents(discs, this);
+        getServer().getPluginManager().registerEvents(new GlobalChatFix(), this);
         profiles.start();
         afk.start();
         startTips();
