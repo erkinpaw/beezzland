@@ -183,9 +183,9 @@ final class NickStyle {
         p.sendMessage(row("Цвета: ", SOLID, p));
         if (gradient) {
             p.sendMessage(row("Градиенты: ", GRADIENTS, p));
-            say(p, "<dark_gray>Свой градиент: <gray>/цвет #FACC15 #F472B6</gray> (до 4 цветов). Вернуть цвет ранга: <gray>/цвет сброс</gray>");
+            say(p, "<gray>Свой градиент: <white>/цвет #FACC15 #F472B6</white> (до 4 цветов). Вернуть цвет ранга: <white>/цвет сброс</white>");
         } else {
-            say(p, "<dark_gray>Градиенты открываются с Diamond. Вернуть цвет ранга: <gray>/цвет сброс</gray>");
+            say(p, "<gray>Градиенты открываются с Diamond. Вернуть цвет ранга: <white>/цвет сброс</white>");
         }
     }
 
