@@ -1,5 +1,6 @@
 """BeezzLand site: static files + /api/status (live server ping) + /map/ (proxy to Pl3xMap)
 + /webtrade/calculator.html (the price calculator WebTrade exports with current prices)
++ /webtrade/calculator-icons.png (its item icon atlas)
 + /api/duels (top, last fights and kits that BeezzDuels exports to duels.json)
 + /head/<nick>/<size> (skin head as chosen in game, also /skin) + /api/login, /api/me, /api/logout
   (personal page, login with «Это я» in the bot) + /api/bans (LibertyBans), see account.py.
@@ -161,6 +162,8 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_duels()
         elif self.path.split("?")[0] == "/webtrade/calculator.html":
             self.send_calculator()
+        elif self.path.split("?")[0] == "/webtrade/calculator-icons.png":
+            self.send_calculator_icons()
         else:
             super().do_GET()
 
@@ -169,6 +172,20 @@ class Handler(SimpleHTTPRequestHandler):
         if self.path.split("?")[0].endswith((".html", "/")) and "Cache-Control" not in "".join(map(str, getattr(self, "_headers_buffer", []))):
             self.send_header("Cache-Control", "no-cache")
         super().end_headers()
+
+    def send_calculator_icons(self):
+        """Item icon atlas the plugin draws next to calculator.html (the page asks for it with ?v=)."""
+        try:
+            data = open(os.path.join(WEBTRADE, "calculator-icons.png"), "rb").read()
+        except OSError:
+            self.send_error(404, "Icons are not drawn yet")
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "image/png")
+        self.send_header("Cache-Control", "public, max-age=86400")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
 
     def send_calculator(self):
         try:

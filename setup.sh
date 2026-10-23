@@ -86,8 +86,12 @@ log "Plugins"
 python3 "$BASE/scripts/fetch_plugins.py" backend "$BASE/survival/plugins"
 python3 "$BASE/scripts/fetch_plugins.py" proxy "$BASE/proxy/plugins"
 if [[ $BEDROCK == 1 ]]; then python3 "$BASE/scripts/fetch_geyser.py" "$BASE/proxy/plugins"; fi
-cp "$SRC"/custom-plugins/*.jar "$BASE/survival/plugins/"   # our own plugins (WebTrade, BeezzWorlds)
-cp "$SRC"/custom-plugins/proxy/*.jar "$BASE/proxy/plugins/"  # our proxy plugins (BeezzAuth)
+# our own plugins; on an update drop their old versions first, or Paper finds the plugin twice
+for jar in "$SRC"/custom-plugins/*.jar "$SRC"/custom-plugins/proxy/*.jar; do
+  dir="$BASE/survival/plugins"; [[ $jar == */proxy/* ]] && dir="$BASE/proxy/plugins"
+  name=$(basename "$jar"); rm -f "$dir/${name%%-[0-9]*}"-[0-9]*.jar
+  cp "$jar" "$dir/"
+done
 cp "$SRC/site/assets/server-icon.png" "$BASE/proxy/server-icon.png"
 chown -R minecraft:minecraft "$BASE"
 

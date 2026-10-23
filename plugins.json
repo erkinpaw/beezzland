@@ -112,8 +112,8 @@
       "why": "жужики (валюта сайта: вход каждый день, ивенты) и дуэли на ставку с китами; duels.json для вкладки «Дуэли» (исходники: plugins-src/BeezzDuels)"
     },
     {
-      "file": "custom-plugins/BeezzCore-1.0.0.jar",
-      "why": "приветствие новичков, /rules, /links, подсказки в чате (исходники: plugins-src/BeezzCore)"
+      "file": "custom-plugins/BeezzCore-1.2.0.jar",
+      "why": "приветствие, /rules, /links, подсказки, карточка игрока, AFK, пластинки, цвет ника доната (исходники: plugins-src/BeezzCore)"
     }
   ],
   "custom_proxy": [

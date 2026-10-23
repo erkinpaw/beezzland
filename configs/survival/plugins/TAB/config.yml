@@ -210,6 +210,7 @@ placeholder-refresh-intervals:
   "%player_health%": 200
   "%player_ping%": 1000
   "%vault_prefix%": 1000
+  "%beezzcore_name%": 1000
   "%rel_factionsuuid_relation_color%": 1000
 
 # assigning groups by permission nodes instead of taking them from permission plugin

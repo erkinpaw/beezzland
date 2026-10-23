@@ -31,12 +31,14 @@ public final class BeezzCore extends JavaPlugin implements Listener {
     private Profiles profiles;
     private AfkGuard afk;
     private DiscLimit discs;
+    private NickStyle nicks;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this, this);
-        profiles = new Profiles(this);
+        nicks = new NickStyle(this);
+        profiles = new Profiles(this, nicks);
         afk = new AfkGuard(this);
         discs = new DiscLimit(this);
         getServer().getPluginManager().registerEvents(profiles, this);
@@ -45,6 +47,9 @@ public final class BeezzCore extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(new GlobalChatFix(), this);
         profiles.start();
         afk.start();
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            new NamePlaceholder(this, nicks).register(); // %beezzcore_name% for TAB's player list
+        }
         startTips();
     }
 
@@ -119,6 +124,9 @@ public final class BeezzCore extends JavaPlugin implements Listener {
             case "rules" -> send(sender, getConfig().getStringList("rules"), p);
             case "links" -> send(sender, getConfig().getStringList("links"), p);
             case "discs" -> discs.show(sender);
+            case "nickcolor" -> {
+                if (nicks.command(sender, args) && p != null) profiles.apply(p);
+            }
             case "beezzcore" -> {
                 if (args.length == 3 && args[0].equalsIgnoreCase("afk")) { // /beezzcore afk <player> <minutes>: test hook
                     Player t = Bukkit.getPlayerExact(args[1]);

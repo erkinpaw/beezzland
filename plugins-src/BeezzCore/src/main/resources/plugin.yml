@@ -3,7 +3,7 @@ version: '${version}'
 main: land.beezz.core.BeezzCore
 api-version: '26.3'
 description: BeezzLand — приветствие, /rules, /links, подсказки, карточка игрока, AFK и лимит пластинок
-softdepend: [LuckPerms]
+softdepend: [LuckPerms, PlaceholderAPI]
 
 commands:
   rules:
@@ -15,12 +15,21 @@ commands:
   discs:
     description: Сколько своих пластинок осталось в этом сезоне
     aliases: [пластинки]
+  nickcolor:
+    description: Свой цвет ника (Gold) или градиент (Diamond)
+    aliases: [цвет, color]
   beezzcore:
     description: Перечитать config.yml
     permission: beezzcore.admin
 
 permissions:
   beezzcore.admin:
+    default: op
+  beezz.nick.color:
+    description: Свой цвет ника (Gold)
+    default: op
+  beezz.nick.gradient:
+    description: Градиент ника из 2–4 цветов (Diamond)
     default: op
   beezz.afk.unlimited:
     description: Не кикать за AFK

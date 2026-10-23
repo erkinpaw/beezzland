@@ -45,11 +45,13 @@ final class Profiles implements Listener {
     }
 
     private final JavaPlugin plugin;
+    private final NickStyle nicks;
     private final Map<UUID, History> history = new ConcurrentHashMap<>();
     private Connection db;
 
-    Profiles(JavaPlugin plugin) {
+    Profiles(JavaPlugin plugin, NickStyle nicks) {
         this.plugin = plugin;
+        this.nicks = nicks;
     }
 
     void start() {
@@ -81,7 +83,10 @@ final class Profiles implements Listener {
 
     /** Set the display name: badge + coloured nick, card on hover, click suggests a private message. */
     void apply(Player p) {
-        Component name = LEGACY.deserialize(Ranks.prefix(p) + p.getName());
+        Component own = nicks.name(p);
+        // badge and rank colour from LuckPerms; a donor's own colour replaces only the letters of the nick
+        Component name = own == null ? LEGACY.deserialize(Ranks.prefix(p) + p.getName())
+                : LEGACY.deserialize(Ranks.prefix(p)).append(own);
         Component shown = name.hoverEvent(HoverEvent.showText(card(p, name)))
                 .clickEvent(ClickEvent.suggestCommand("/msg " + p.getName() + " "));
         p.displayName(shown);
