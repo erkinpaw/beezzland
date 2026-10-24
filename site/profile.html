@@ -83,6 +83,7 @@
       <a href="duels.html">Дуэли</a>
       <a href="bans.html">Банлист</a>
       <a class="hide-sm" href="calculator.html">Калькулятор</a>
+      <a href="shop.html">Донат</a>
       <a class="on" href="profile.html">Кабинет</a>
     </nav>
   </div>
@@ -135,7 +136,7 @@
     </div>
     <div class="panel soon">
       <h3>Донат-ранг</h3>
-      <span class="muted">Скоро здесь можно будет купить Silver, Gold или Diamond — в том числе за жужики.</span>
+      <span class="muted">Silver, Gold и Diamond — за рубли на странице <a href="shop.html">Донат</a>, за жужики — в игре командой /donate.</span>
     </div>
   </section>
 </main>
@@ -210,7 +211,12 @@
     const started = Date.now();
     polling = setInterval(async () => {
       const s = await fetch("/api/login/status?request=" + encodeURIComponent(j.request), { cache: "no-store" }).then((x) => x.json()).catch(() => ({}));
-      if (s.state === "approved") { clearInterval(polling); $("[data-wait]").hidden = true; me(); }
+      if (s.state === "approved") {
+        clearInterval(polling); $("[data-wait]").hidden = true;
+        // came from another page (the shop): go back there logged in
+        const next = new URLSearchParams(location.search).get("next");
+        if (next && /^[a-z]+\.html$/.test(next)) location.href = next; else me();
+      }
       else if (s.state === "rejected" || s.state === "expired" || Date.now() - started > 180000) {
         clearInterval(polling); $("[data-wait]").hidden = true;
         $("[data-err]").textContent = s.state === "rejected" ? "Вход отклонён в боте." : "Время вышло, попробуй ещё раз.";

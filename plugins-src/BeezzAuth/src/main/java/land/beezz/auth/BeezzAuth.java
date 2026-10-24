@@ -59,7 +59,7 @@ public final class BeezzAuth {
                 ? (cfg.trustFloodgate ? "found: Bedrock players skip linking" : "found, but trust-floodgate is off")
                 : "not installed: only Java players");
         // local API (127.0.0.1 only): BeezzGate's registration window and the site's login
-        api = new LinkApi(auth, dir, cfg.apiPort, log);
+        api = new LinkApi(auth, proxy, dir, cfg.apiPort, log);
         log.info("API on 127.0.0.1:{}{}", cfg.apiPort, cfg.gate ? "; gate mode: new players get their code from BeezzGate" : "");
         proxy.getCommandManager().register(
                 proxy.getCommandManager().metaBuilder("bauth").plugin(this).build(),

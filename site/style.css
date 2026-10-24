@@ -160,7 +160,9 @@ body.map-page { height: 100vh; display: flex; flex-direction: column; overflow: 
   .grid, .steps { grid-template-columns: 1fr; }
   .rules { grid-template-columns: 1fr; }
   .map-teaser { grid-template-columns: 1fr; }
-  nav { gap: 14px; }
+  /* too many tabs for a phone: the menu scrolls sideways instead of pushing the page wider */
+  nav { gap: 14px; min-width: 0; overflow-x: auto; scrollbar-width: none; white-space: nowrap; }
+  nav::-webkit-scrollbar { display: none; }
   nav a.hide-sm { display: none; }
   .brand span { display: none; }
 }

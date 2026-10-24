@@ -2,7 +2,7 @@
 _DEFAULT_:
   tabprefix: "%luckperms-prefix%"
   tagprefix: "%luckperms-prefix%"
-  # %beezzcore_name% — the nick in a donor's own colours (/цвет), otherwise just the name in the rank colour
+  # %beezzcore_name% — the nick in a donor's own colours (/color), otherwise just the name in the rank colour
   customtabname: "%beezzcore_name%"
   tabsuffix: "%luckperms-suffix%"
   tagsuffix: "%luckperms-suffix%"

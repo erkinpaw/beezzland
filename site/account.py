@@ -29,11 +29,14 @@ def _db():
     return sqlite3.connect(f"file:{CFG['db']}?mode=ro", uri=True, timeout=5)
 
 
-def _auth(path, **params):
+def _auth(path, _timeout=5, **params):
     url = CFG["auth"] + path + "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers={"X-Secret": CFG["auth_secret"]})
-    with urllib.request.urlopen(req, timeout=5) as r:
+    with urllib.request.urlopen(req, timeout=_timeout) as r:
         return json.loads(r.read())
+
+
+auth_call = _auth  # the shop delivers paid orders through the same API
 
 
 def skin_texture(name):

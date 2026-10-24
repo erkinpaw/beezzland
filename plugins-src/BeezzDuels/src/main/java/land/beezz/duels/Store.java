@@ -32,6 +32,8 @@ final class Store {
         db = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
         try (Statement s = db.createStatement()) {
             s.execute("PRAGMA journal_mode=WAL");
+            // the site writes here too (unban for жужики): wait for its short transaction instead of failing
+            s.execute("PRAGMA busy_timeout=5000");
             s.execute("CREATE TABLE IF NOT EXISTS balances (uuid TEXT PRIMARY KEY, name TEXT NOT NULL, amount INTEGER NOT NULL DEFAULT 0,"
                     + " last_day TEXT, streak INTEGER NOT NULL DEFAULT 0)");
             s.execute("CREATE TABLE IF NOT EXISTS log (id INTEGER PRIMARY KEY, uuid TEXT NOT NULL, delta INTEGER NOT NULL,"

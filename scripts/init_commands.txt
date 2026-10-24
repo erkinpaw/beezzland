@@ -82,7 +82,7 @@ lp group helper parent add default
 lp group helper permission set pv.addon.discs.burn true
 lp group helper permission set pv.addon.discs.erase true
 lp group helper permission set pv.addon.discs.search true
-# own nick colour (/цвет): Gold — one colour, Diamond — a gradient; diamond inherits gold
+# own nick colour (/color): Gold — one colour, Diamond — a gradient; diamond inherits gold
 lp group gold permission set beezz.nick.color true
 lp group diamond permission set beezz.nick.gradient true
 # WebTrade: everyone trades at the trade-centre stands; opening the exchange by command from anywhere is Gold+

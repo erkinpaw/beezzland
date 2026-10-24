@@ -124,7 +124,7 @@ public final class BeezzCore extends JavaPlugin implements Listener {
             case "rules" -> send(sender, getConfig().getStringList("rules"), p);
             case "links" -> send(sender, getConfig().getStringList("links"), p);
             case "discs" -> discs.show(sender);
-            case "nickcolor" -> {
+            case "color" -> {
                 if (nicks.command(sender, args) && p != null) profiles.apply(p);
             }
             case "beezzcore" -> {

@@ -44,7 +44,7 @@ const said = (bot, re) => bot.chats.some((m) => re.test(m));
 
 (async () => {
   const A = await join("DuelA"), B = await join("DuelB");
-  await rcon(["clear DuelA", "clear DuelB", "give DuelA dirt 5", "жужики дать DuelA 200 тест", "жужики дать DuelB 200 тест"]);
+  await rcon(["clear DuelA", "clear DuelB", "give DuelA dirt 5", "jujik give DuelA 200 тест", "jujik give DuelB 200 тест"]);
   await sleep(3500); // the daily reward message comes 3 s after joining
   check("daily login reward is given (once a day: fresh nick or new day)", said(A, /за вход/) || process.env.SECOND_RUN);
   check("admin gives жужики for an event", said(A, /\+200 жужиков/));
@@ -80,12 +80,12 @@ const said = (bot, re) => bot.chats.some((m) => re.test(m));
   check("after the duel: back where they stood", A.entity.position.distanceTo(home) < 1.5, `${A.entity.position} vs ${home}`);
 
   A.chats.length = 0;
-  A.chat("/жужики");
+  A.chat("/jujik");
   await sleep(700);
   // 200 + 10 (daily) - 50 + 95 (pot 100 minus 5%)
   check("winner balance = 200 + 10 - 50 + 95 = 255", said(A, /255 жужиков/), A.chats.join(" | ").slice(0, 160));
   B.chats.length = 0;
-  B.chat("/жужики");
+  B.chat("/jujik");
   await sleep(700);
   check("loser balance = 200 + 10 - 50 = 160", said(B, /160 жужиков/));
 

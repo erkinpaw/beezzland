@@ -8,16 +8,14 @@ softdepend: [LuckPerms, PlaceholderAPI]
 commands:
   rules:
     description: Правила сервера
-    aliases: [правила]
   links:
     description: Сайт и соцсети сервера
-    aliases: [site, discord, vk, tg, ссылки]
+    aliases: [site, discord, vk, tg]
   discs:
     description: Сколько своих пластинок осталось в этом сезоне
-    aliases: [пластинки]
-  nickcolor:
+  color:
     description: Свой цвет ника (Gold) или градиент (Diamond)
-    aliases: [цвет, color]
+    aliases: [nickcolor]
   beezzcore:
     description: Перечитать config.yml
     permission: beezzcore.admin

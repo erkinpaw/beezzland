@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Own nick colour, a donor perk: Gold picks one colour, Diamond a gradient of 2–4 colours (/цвет).
+ * Own nick colour, a donor perk: Gold picks one colour, Diamond a gradient of 2–4 colours (/color).
  * The choice is kept in nicks.yml; it only shows while the player still has the permission, so an
  * expired rank falls back to the rank colour by itself, and renewing it brings the colour back.
  */
@@ -121,7 +121,7 @@ final class NickStyle {
         return stops;
     }
 
-    // ------------------------------------------------------------------ /цвет
+    // ------------------------------------------------------------------ /color
 
     /** @return true when the nick changed and the profile needs re-applying */
     boolean command(CommandSender sender, String[] args) {
@@ -152,7 +152,7 @@ final class NickStyle {
             else if (preset != null) hex.add(preset);
             else if (arg.matches("#?[0-9a-fA-F]{6}")) hex.add(arg.startsWith("#") ? arg.toUpperCase(Locale.ROOT) : "#" + arg.toUpperCase(Locale.ROOT));
             else {
-                say(p, "<gray>Не понял цвет <white>" + MM.escapeTags(arg) + "</white>. Напиши <#93C5FD>/цвет</#93C5FD>, чтобы увидеть варианты.");
+                say(p, "<gray>Не понял цвет <white>" + MM.escapeTags(arg) + "</white>. Напиши <#93C5FD>/color</#93C5FD>, чтобы увидеть варианты.");
                 return false;
             }
         }
@@ -178,14 +178,14 @@ final class NickStyle {
 
     private void menu(Player p, boolean gradient) {
         Component current = name(p);
-        say(p, "<#FACC15>Цвет ника</#FACC15> <dark_gray>·</dark_gray> <gray>нажми на вариант или напиши <white>/цвет #RRGGBB</white>");
+        say(p, "<#FACC15>Цвет ника</#FACC15> <dark_gray>·</dark_gray> <gray>нажми на вариант или напиши <white>/color #RRGGBB</white>");
         p.sendMessage(MM.deserialize("<gray>Сейчас: ").append(current != null ? current : p.displayName()));
         p.sendMessage(row("Цвета: ", SOLID, p));
         if (gradient) {
             p.sendMessage(row("Градиенты: ", GRADIENTS, p));
-            say(p, "<gray>Свой градиент: <white>/цвет #FACC15 #F472B6</white> (до 4 цветов). Вернуть цвет ранга: <white>/цвет сброс</white>");
+            say(p, "<gray>Свой градиент: <white>/color #FACC15 #F472B6</white> (до 4 цветов). Вернуть цвет ранга: <white>/color сброс</white>");
         } else {
-            say(p, "<gray>Градиенты открываются с Diamond. Вернуть цвет ранга: <white>/цвет сброс</white>");
+            say(p, "<gray>Градиенты открываются с Diamond. Вернуть цвет ранга: <white>/color сброс</white>");
         }
     }
 
@@ -197,7 +197,7 @@ final class NickStyle {
             firstItem = false;
             line.append(paint(e.getKey(), parse(e.getValue()))
                     .hoverEvent(HoverEvent.showText(paint(p.getName(), parse(e.getValue()))))
-                    .clickEvent(ClickEvent.runCommand("/цвет " + e.getKey())));
+                    .clickEvent(ClickEvent.runCommand("/color " + e.getKey())));
         }
         return line.build();
     }

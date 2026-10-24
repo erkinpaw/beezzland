@@ -3,7 +3,8 @@
 + /webtrade/calculator-icons.png (its item icon atlas)
 + /api/duels (top, last fights and kits that BeezzDuels exports to duels.json)
 + /head/<nick>/<size> (skin head as chosen in game, also /skin) + /api/login, /api/me, /api/logout
-  (personal page, login with «Это я» in the bot) + /api/bans (LibertyBans), see account.py.
+  (personal page, login with «Это я» in the bot) + /api/bans (LibertyBans), see account.py
++ /api/shop, /api/shop/order, /api/shop/yoomoney (ranks and the unban for rubles / жужики), see shop.py.
 
 Usage: python server.py [--port 8080] [--mc 127.0.0.1:25565] [--map 127.0.0.1:8100]
                         [--webtrade /opt/mc/survival/plugins/WebTrade]
@@ -17,6 +18,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # run with -I: our own modules are still found
 import account  # noqa: E402
+import shop  # noqa: E402
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 HOP = {"connection", "keep-alive", "transfer-encoding", "te", "trailer", "upgrade", "proxy-authenticate",
@@ -91,6 +93,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = self.path.split("?")[0]
+        if path == "/api/shop/yoomoney":
+            # ЮMoney's payment notification: a form, not JSON; any answer but 200 makes them repeat it
+            form = dict(urllib.parse.parse_qsl(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 8192)).decode()))
+            return self.json_reply(200 if shop.yoomoney_notification(form) else 400, {})
         try:
             body = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length") or 0), 4096)) or b"{}")
         except ValueError:
@@ -100,6 +106,12 @@ class Handler(SimpleHTTPRequestHandler):
             if not name or len(name) > 32 or not all(ch.isalnum() or ch in "_." for ch in name):
                 return self.json_reply(400, {"error": "bad_name"})
             code, r = account.login_start(name, self.client_ip())
+            return self.json_reply(code, r)
+        if path == "/api/shop/order":
+            name = account.session_name(self.token())
+            if not name:
+                return self.json_reply(401, {"error": "login"})
+            code, r = shop.order(name, str(body.get("item", "")), str(body.get("method", "")), str(body.get("pay", "AC")))
             return self.json_reply(code, r)
         if path == "/api/logout":
             account.end_session(self.token(), everywhere=bool(body.get("all")))
@@ -125,6 +137,13 @@ class Handler(SimpleHTTPRequestHandler):
             if not name:
                 return self.json_reply(401, {"error": "login"}) or True
             return self.json_reply(200, account.profile(name)) or True
+        if path == "/api/shop":
+            return self.json_reply(200, shop.catalog(account.session_name(self.token()))) or True
+        if path == "/api/shop/order":
+            name = account.session_name(self.token())
+            if not name:
+                return self.json_reply(401, {"error": "login"}) or True
+            return self.json_reply(200, shop.status(query.get("id", ""), name)) or True
         if path == "/api/bans":
             try:
                 rows = account.bans()
@@ -265,15 +284,18 @@ if __name__ == "__main__":
     ap.add_argument("--map", default="127.0.0.1:8100")
     ap.add_argument("--webtrade", default="/opt/mc/survival/plugins/WebTrade")
     ap.add_argument("--duels", default="/opt/mc/survival/plugins/BeezzDuels/duels.json")
-    ap.add_argument("--db", default="/opt/mc/survival/plugins/BeezzDuels/zhuzhiki.db", help="BeezzDuels database (read only)")
+    ap.add_argument("--db", default="/opt/mc/survival/plugins/BeezzDuels/zhuzhiki.db", help="BeezzDuels database (the shop takes жужики from it for the unban)")
     ap.add_argument("--auth", default="http://127.0.0.1:8766", help="BeezzAuth local API")
     ap.add_argument("--auth-secret", default="/opt/mc/proxy/plugins/beezzauth/api-secret.txt")
     ap.add_argument("--sessions", default=os.path.join(ROOT, "..", "sessions.json"), help="logged-in sessions (token hashes)")
     ap.add_argument("--bans", default=os.environ.get("BANS_DSN", ""), help="mysql://user:pass@localhost/db of LibertyBans")
+    ap.add_argument("--shop", default=os.path.join(ROOT, "..", "shop.json"), help="shop settings: ЮMoney wallet, prices")
+    ap.add_argument("--shop-db", default=os.path.join(ROOT, "..", "shop.db"), help="orders and the unban counter")
     a = ap.parse_args()
     WEBTRADE = a.webtrade
     DUELS = a.duels
     account.setup(a.db, a.auth, a.auth_secret, a.sessions, a.bans)
+    shop.setup(a.shop, a.shop_db, a.db)
     MC = (a.mc.split(":")[0], int(a.mc.split(":")[1]))
     MAP = (a.map.split(":")[0], int(a.map.split(":")[1]))
     print(f"BeezzLand site: http://localhost:{a.port}  (minecraft {a.mc}, map {a.map})")

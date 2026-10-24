@@ -2,6 +2,8 @@ package land.beezz.auth;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -18,17 +20,19 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Local HTTP API for BeezzGate (the game server): {@code GET /link?name=<nick>&ip=<ip>} with header
  * {@code X-Secret} → {"linked":true} or {"linked":false,"code":"123456","minutes":10,"bots":[…]}.
+ * The site uses {@code /site/*} (login, linked bots) and {@code /shop/grant|unban} (delivery of a paid order).
  * Listens on 127.0.0.1 only; the key is generated once into api-secret.txt.
  */
 final class LinkApi {
 
     private final HttpServer server;
 
-    LinkApi(AuthService auth, Path dir, int port, Logger log) throws IOException {
+    LinkApi(AuthService auth, ProxyServer proxy, Path dir, int port, Logger log) throws IOException {
         Path keyFile = dir.resolve("api-secret.txt");
         if (Files.notExists(keyFile)) {
             byte[] b = new byte[24];
@@ -78,7 +82,52 @@ final class LinkApi {
                 log.warn("site API: {}", e.toString());
             }
         });
+        // the site's shop, after a payment: the rank (LuckPerms, shared database) and the unban (LibertyBans) live here
+        server.createContext("/shop/", ex -> {
+            try (ex) {
+                String given = ex.getRequestHeaders().getFirst("X-Secret");
+                if (given == null || !MessageDigest.isEqual(secret, given.trim().getBytes(StandardCharsets.UTF_8))) {
+                    reply(ex, 403, "{\"error\":\"bad secret\"}");
+                    return;
+                }
+                Map<String, String> q = query(ex.getRequestURI().getRawQuery());
+                String name = q.getOrDefault("name", "");
+                if (!name.matches("[A-Za-z0-9_.]{1,32}")) {
+                    reply(ex, 400, "{\"error\":\"bad_name\"}");
+                    return;
+                }
+                switch (ex.getRequestURI().getPath()) {
+                    case "/shop/grant" -> {
+                        String rank = q.getOrDefault("rank", "");
+                        String days = q.getOrDefault("days", "");
+                        if (!rank.matches("[a-z]{1,16}") || !days.matches("[1-9][0-9]{0,3}")) {
+                            reply(ex, 400, "{\"error\":\"bad_rank\"}");
+                            return;
+                        }
+                        // accumulate: buying the same rank again adds days instead of resetting the timer
+                        boolean ok = console(proxy, "lpv user " + name + " parent addtemp " + rank + " " + days + "d accumulate", log);
+                        if (ok) tell(proxy, name, "<#34D399>Спасибо за поддержку!</#34D399> <gray>Ранг <white>"
+                                + q.getOrDefault("title", rank) + "</white> выдан на " + days + " дней.");
+                        reply(ex, 200, "{\"ok\":" + ok + "}");
+                    }
+                    case "/shop/unban" -> reply(ex, 200, "{\"ok\":" + console(proxy, "libertybans unban " + name, log) + "}");
+                    default -> reply(ex, 404, "{}");
+                }
+            } catch (Exception e) {
+                log.warn("shop API: {}", e.toString());
+            }
+        });
         server.start();
+    }
+
+    /** Runs a console command on the proxy; false if no plugin knows it. */
+    private static boolean console(ProxyServer proxy, String command, Logger log) throws Exception {
+        log.info("shop: {}", command);
+        return proxy.getCommandManager().executeAsync(proxy.getConsoleCommandSource(), command).get(15, TimeUnit.SECONDS);
+    }
+
+    private static void tell(ProxyServer proxy, String name, String mini) {
+        proxy.getPlayer(name).ifPresent(p -> p.sendMessage(MiniMessage.miniMessage().deserialize(mini)));
     }
 
     void stop() {

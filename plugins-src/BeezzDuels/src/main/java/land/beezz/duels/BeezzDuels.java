@@ -63,7 +63,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Жужики (the site currency: earned by daily login and events, never sold) and duels for them:
- * {@code /дуэль Ник 50 [кит]} → the other player gets a window «Принять / Отказаться» → both stakes are
+ * {@code /duel Ник 50 [кит]} → the other player gets a window «Принять / Отказаться» → both stakes are
  * held, both go to an arena with the same kit, the winner takes the pot minus the server's cut.
  * Survival inventories never enter the arena: they are saved to disk and given back after the fight.
  */
@@ -78,6 +78,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
 
     private Store store;
     private Arenas arenas;
+    private Donate donate;
     private File pendingDir, exportFile;
     private long minStake, maxStake, commission, requestMs, fightTicks, dailyBase, dailyStep, dailyMax;
     private int pairPerDay;
@@ -118,8 +119,10 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("duel").setExecutor(this);
         getCommand("duel").setTabCompleter(this);
-        getCommand("жужики").setExecutor(this);
-        getCommand("жужики").setTabCompleter(this);
+        getCommand("jujik").setExecutor(this);
+        getCommand("jujik").setTabCompleter(this);
+        donate = new Donate(this, store, c.getConfigurationSection("donate"), () -> dirty = true);
+        getCommand("donate").setExecutor(this);
         getServer().getScheduler().runTaskTimerAsynchronously(this, this::export, 40L, 600L);
         // skins can change any time (/skin): look at online players once a minute, only changes hit the database
         getServer().getScheduler().runTaskTimer(this, () -> Bukkit.getOnlinePlayers().forEach(this::recordSkin), 200L, 1200L);
@@ -137,7 +140,11 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
 
     @Override
     public boolean onCommand(CommandSender s, Command cmd, String label, String[] a) {
-        if (cmd.getName().equals("жужики")) return zhuzhiki(s, a);
+        if (cmd.getName().equals("jujik")) return zhuzhiki(s, a);
+        if (cmd.getName().equals("donate")) {
+            if (s instanceof Player p) donate.open(p);
+            return true;
+        }
         if (!(s instanceof Player p)) {
             s.sendMessage("Только для игроков.");
             return true;
@@ -422,7 +429,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         if (a.length == 0) {
             if (s instanceof Player p) {
                 say(p, "<gray>У тебя</gray> <#FACC15>" + balance(p) + " жужиков</#FACC15><gray>. Зарабатываются за вход каждый день и на ивентах. "
-                        + "Топ: <white>/жужики топ</white>.");
+                        + "Топ: <white>/jujik top</white>.");
             }
             return true;
         }
@@ -441,7 +448,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         boolean takeCmd = a[0].equalsIgnoreCase("забрать") || a[0].equalsIgnoreCase("take");
         if ((giveCmd || takeCmd) && s.hasPermission("beezzduels.admin")) {
             if (a.length < 3) {
-                s.sendMessage(MM.deserialize(P + "<gray>/жужики дать <ник> <сумма> [за что]"));
+                s.sendMessage(MM.deserialize(P + "<gray>/jujik give <ник> <сумма> [за что]"));
                 return true;
             }
             OfflinePlayer t = Bukkit.getOfflinePlayerIfCached(a[1]);
@@ -469,7 +476,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             }
             return true;
         }
-        s.sendMessage(MM.deserialize(P + "<gray>/жужики, /жужики топ"));
+        s.sendMessage(MM.deserialize(P + "<gray>/jujik, /jujik top"));
         return true;
     }
 
@@ -591,7 +598,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     public void onCommand(PlayerCommandPreprocessEvent e) {
         if (!duels.containsKey(e.getPlayer().getUniqueId())) return;
         String m = e.getMessage().toLowerCase();
-        if (!m.matches("^/(duel|дуэль) (surrender|сдаться).*")) {
+        if (!m.matches("^/duel (surrender|сдаться).*")) {
             e.setCancelled(true);
             say(e.getPlayer(), "<gray>Во время дуэли команды не работают. Сдаться: <white>/duel surrender");
         }
@@ -698,9 +705,9 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     @Override
     public List<String> onTabComplete(CommandSender s, Command cmd, String label, String[] a) {
         List<String> out = new ArrayList<>();
-        if (cmd.getName().equals("жужики")) {
-            if (a.length == 1) out.addAll(s.hasPermission("beezzduels.admin") ? List.of("топ", "дать", "забрать") : List.of("топ"));
-            else if (a.length == 2 && !a[0].equalsIgnoreCase("топ")) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+        if (cmd.getName().equals("jujik")) {
+            if (a.length == 1) out.addAll(s.hasPermission("beezzduels.admin") ? List.of("top", "give", "take") : List.of("top"));
+            else if (a.length == 2 && !a[0].equalsIgnoreCase("top")) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
         } else if (a.length == 1) {
             out.addAll(List.of("accept", "decline", "surrender"));
             Bukkit.getOnlinePlayers().stream().filter(p -> !p.equals(s)).forEach(p -> out.add(p.getName()));
