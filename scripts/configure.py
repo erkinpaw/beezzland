@@ -105,6 +105,33 @@ entities:
 
 NL = chr(10)
 
+# The main world: fewer mobs and a shorter entity activation range (load test: −21% MSPT in the worst case).
+# Not for the farm world — iron farms, villager breeders and AFK farms at 24–32 blocks would break there.
+MAIN_PAPER = """# BeezzLand: the main world (scripts/configure.py writes this file)
+_version: 31
+entities:
+  spawning:
+    spawn-limits:
+      monster: 50
+      ambient: 5
+      water_ambient: 5
+    ticks-per-spawn:
+      monster: 5
+"""
+MAIN_SPIGOT = ("  world:" + NL + "    entity-activation-range:" + NL + "      animals: 16" + NL + "      monsters: 24" + NL
+               + "      villagers: 16" + NL + "      misc: 8" + NL + "      water: 8" + NL)
+
+
+def main_world():
+    d = os.path.join(SURV, "world", "dimensions", "minecraft", "overworld")
+    os.makedirs(d, exist_ok=True)
+    write(os.path.join(d, "paper-world.yml"), MAIN_PAPER)
+    p = os.path.join(SURV, "spigot.yml")
+    t = read(p)
+    t = re.sub(rf"(?m)^  world:{NL}(    .*{NL})*", "", t)
+    t = t.replace("world-settings:" + NL, "world-settings:" + NL + MAIN_SPIGOT, 1)
+    write(p, t)
+
 
 def farm_world():
     for world in ("farm", "farm_nether"):
@@ -168,6 +195,7 @@ def main():
 
     # --- Farm world: more mobs, spawner mobs without AI (see farm_world()) ---
     farm_world()
+    main_world()
 
     # --- LuckPerms (backend + proxy share one database) ---
     for p in (os.path.join(SURV, "plugins", "LuckPerms", "config.yml"),
