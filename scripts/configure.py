@@ -89,6 +89,38 @@ def props(path, values):
     write(path, "\n".join(lines) + "\n")
 
 
+# The farm world is for farms, so it may differ from the main one (PLAN.md, load test):
+# - monsters: a higher cap (70 → 100) — mob farms there work faster;
+# - mobs from spawners have no AI (Spigot's nerf-spawner-mobs): they stand, don't chase or attack,
+#   only fall and get pushed by water, like on Vanilla Squad — much less work for the server;
+# - iron golems spawned by villagers there have no AI either (BeezzWorlds Golems.java).
+FARM_PAPER = """# BeezzLand: the farm world (scripts/configure.py writes this file)
+_version: 31
+entities:
+  spawning:
+    spawn-limits:
+      monster: 100
+"""
+
+
+NL = chr(10)
+
+
+def farm_world():
+    for world in ("farm", "farm_nether"):
+        d = os.path.join(SURV, "world", "dimensions", "minecraft", world)
+        os.makedirs(d, exist_ok=True)
+        if world == "farm":
+            write(os.path.join(d, "paper-world.yml"), FARM_PAPER)
+    p = os.path.join(SURV, "spigot.yml")
+    t = read(p)
+    for world in ("farm", "farm_nether"):
+        block = f"  {world}:{NL}    nerf-spawner-mobs: true{NL}"
+        t = re.sub(rf"(?m)^  {world}:{NL}(    .*{NL})*", "", t)  # replace our earlier block
+        t = t.replace("world-settings:" + NL, "world-settings:" + NL + block, 1)
+    write(p, t)
+
+
 def main():
     online = S["online_mode"]
     secret = read(os.path.join(PROXY, "forwarding.secret")).strip()
@@ -133,6 +165,9 @@ def main():
     # Paper's built-in anti-xray: ores fully hidden inside stone are sent to clients as stone
     p = os.path.join(SURV, "config", "paper-world-defaults.yml")
     write(p, yaml_set(read(p), ["anticheat", "anti-xray", "enabled"], "true"))
+
+    # --- Farm world: more mobs, spawner mobs without AI (see farm_world()) ---
+    farm_world()
 
     # --- LuckPerms (backend + proxy share one database) ---
     for p in (os.path.join(SURV, "plugins", "LuckPerms", "config.yml"),

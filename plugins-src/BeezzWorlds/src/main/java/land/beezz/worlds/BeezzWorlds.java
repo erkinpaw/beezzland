@@ -29,7 +29,7 @@ public final class BeezzWorlds extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new VanillaPortals(worlds), this);
         getServer().getPluginManager().registerEvents(honey, this);
         getServer().getScheduler().runTaskTimer(this, honey::tickParticles, 20L, 4L);
-        Golems.start(this); // iron farms work without beds
+        Golems.start(this, worlds); // iron farms work without beds; farm-world golems have no AI
 
         BeezzCommand command = new BeezzCommand(worlds, honey);
         getCommand("beezz").setExecutor(command);

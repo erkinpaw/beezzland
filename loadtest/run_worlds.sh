@@ -20,7 +20,7 @@ mon=$!
 sleep 5
 node world_bots.js "$minutes" "${LT_PORT:-25565}" > "$name.bots.log" 2>&1 || true
 "$py" farms.py count > "$name.farms.json"
-"$py" ../scripts/rcon.py "paper entity list * world" "paper entity list * world_nether" "paper entity list * farm" "paper entity list * farm_nether" > "$name.entities.txt" 2>&1 || true
+"$py" ../scripts/rcon.py "paper entity list * minecraft:overworld" "paper entity list * minecraft:the_nether" "paper entity list * minecraft:farm" "paper entity list * minecraft:farm_nether" > "$name.entities.txt" 2>&1 || true
 wait "$mon" || true
 
 echo "== $name: $(grep -c . "$name.csv") samples"
