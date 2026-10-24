@@ -173,7 +173,7 @@ def extras():
     collisions were tried too and dropped: no gain here, and they can change how farms behave.
     - explosions: Paper's faster calculation, same result;
     - mobs don't re-plan their path on every nearby block change (they do when the path breaks);
-    - armor stands and markers don't tick (no gravity for armor stands — they stay where placed);
+    - markers don't tick (armor stands do: players build mechanisms with them);
     - items merge from 2.5 blocks, XP orbs from 3: fewer item entities;
     - dropped cobblestone / netherrack despawn after 15 s, eggs after 1 min (thousands of eggs lie
       in chunks no one visits: chickens lay them all the time);
@@ -185,8 +185,8 @@ def extras():
     for path, value in [
         (["environment", "optimize-explosions"], "true"),
         (["misc", "update-pathfinding-on-block-update"], "false"),
-        (["entities", "armor-stands", "tick"], "false"),
-        (["entities", "armor-stands", "do-collision-entity-lookups"], "false"),
+        (["entities", "armor-stands", "tick"], "true"),  # explicit: an earlier version turned it off
+        (["entities", "armor-stands", "do-collision-entity-lookups"], "true"),
         (["entities", "markers", "tick"], "false"),
         (["entities", "spawning", "alt-item-despawn-rate", "enabled"], "true"),
         (["entities", "spawning", "non-player-arrow-despawn-rate"], "60"),
