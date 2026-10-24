@@ -20,11 +20,15 @@ public interface Provider {
     /** Where players find the bot, shown on the kick screen: «vk.me/beezzland», «@beezzland_bot». */
     String where();
 
+    /** A link that opens this bot in the browser/app, with the code passed along where the messenger allows it. */
+    String url(String code);
+
     void start(Inbox inbox);
 
     void stop();
 
-    void sendConfirm(String userId, String nick, String maskedIp, String requestId);
+    /** «Это ты?» with two buttons; what = «Вход на BeezzLand» (game) or «Вход на сайт BeezzLand». */
+    void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId);
 
     void sendText(String userId, String text);
 }

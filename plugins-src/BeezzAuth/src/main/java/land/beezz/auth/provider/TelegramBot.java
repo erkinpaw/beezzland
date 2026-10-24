@@ -24,6 +24,8 @@ public final class TelegramBot implements Provider {
     @Override public String id() { return "telegram"; }
     @Override public String title() { return "Telegram"; }
     @Override public String where() { return "@" + cfg.username(); }
+    // t.me/<bot>?start=<code>: Telegram sends «/start <code>» by itself, the player only presses «Start»
+    @Override public String url(String code) { return "https://t.me/" + cfg.username() + "?start=" + code; }
 
     private String api(String method) {
         return cfg.apiBase() + "/bot" + cfg.token() + "/" + method;
@@ -99,10 +101,10 @@ public final class TelegramBot implements Provider {
     }
 
     @Override
-    public void sendConfirm(String userId, String nick, String maskedIp, String requestId) {
+    public void sendConfirm(String userId, String what, String nick, String maskedIp, String requestId) {
         JsonObject body = new JsonObject();
         body.addProperty("chat_id", userId);
-        body.addProperty("text", "🐝 Вход на BeezzLand\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?");
+        body.addProperty("text", "🐝 " + what + "\n\nНик: " + nick + "\nIP: " + maskedIp + "\n\nЭто ты?");
         JsonArray row = new JsonArray();
         row.add(button("✅ Это я", "ok:" + requestId));
         row.add(button("❌ Это не я", "no:" + requestId));

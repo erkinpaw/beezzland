@@ -35,15 +35,16 @@ function join(name, fromIp, onWaiting) {
 }
 
 (async () => {
-  const NAME = "DiscordPlayer", USER = "321";
+  const NAME = "DiscordPlayer" + (Date.now() % 1000), USER = "321";
   let r = await join(NAME, "127.0.0.1");
   const code = (r.kicked || "").match(/(\d{6})/)?.[1];
   check("kick screen lists the Discord invite", /discord\.gg\/beezztest/.test(r.kicked || ""));
   check("new player gets a code", !!code);
 
+  const sentBefore = (await sent()).length;
   await inject("MESSAGE_CREATE", { channel_id: "server-chat", guild_id: "1", author: { id: USER }, content: code });
   await sleep(600);
-  check("messages in server channels are ignored", (await sent()).length === 0);
+  check("messages in server channels are ignored", (await sent()).length === sentBefore);
 
   await inject("MESSAGE_CREATE", { channel_id: `dm-${USER}`, author: { id: USER }, content: code });
   await sleep(1000);

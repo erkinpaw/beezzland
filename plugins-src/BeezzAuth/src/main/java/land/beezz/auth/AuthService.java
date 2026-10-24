@@ -77,6 +77,9 @@ public final class AuthService implements Provider.Inbox {
         long now = System.currentTimeMillis();
         Accounts.Account acc = accounts.get(name);
         if (acc == null || acc.links.isEmpty()) {
+            if (cfg.gate) {
+                return Verdict.ALLOW; // BeezzGate holds them on the loading screen with the code in a window
+            }
             return new Verdict(linkScreen(newCode(name, ip)));
         }
         if (ip.equals(acc.lastIp) && now < acc.sessionUntil
@@ -95,7 +98,7 @@ public final class AuthService implements Provider.Inbox {
         PendingConfirm pending = new PendingConfirm(acc.name, ip, now, new CompletableFuture<>());
         confirms.put(requestId, pending);
         for (Provider p : reachable) {
-            p.sendConfirm(acc.links.get(p.id()), acc.name, mask(ip), requestId);
+            p.sendConfirm(acc.links.get(p.id()), "Вход на BeezzLand", acc.name, mask(ip), requestId);
         }
         log.info("{} logs in from a new address, waiting for confirmation in {}", acc.name,
                 reachable.stream().map(Provider::title).toList());
@@ -161,6 +164,29 @@ public final class AuthService implements Provider.Inbox {
         return code;
     }
 
+    /** For BeezzGate: is the nick linked, and if not, its code and where to send it. */
+    public com.google.gson.JsonObject linkStatus(String name, String ip) {
+        com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+        Accounts.Account acc = accounts.get(name);
+        boolean linked = acc != null && !acc.links.isEmpty();
+        o.addProperty("linked", linked);
+        if (linked) return o;
+        String code = newCode(name, ip);
+        o.addProperty("code", code);
+        o.addProperty("minutes", cfg.linkCodeLife.toMinutes());
+        com.google.gson.JsonArray bots = new com.google.gson.JsonArray();
+        for (Provider p : providers.values()) {
+            com.google.gson.JsonObject b = new com.google.gson.JsonObject();
+            b.addProperty("id", p.id());
+            b.addProperty("title", p.title());
+            b.addProperty("where", p.where());
+            b.addProperty("url", p.url(code));
+            bots.add(b);
+        }
+        o.add("bots", bots);
+        return o;
+    }
+
     // ------------------------------------------------------------------ bots
 
     @Override
@@ -205,8 +231,97 @@ public final class AuthService implements Provider.Inbox {
                 + "Если войдут с другого устройства — я спрошу здесь, ты ли это.";
     }
 
+    // ------------------------------------------------------------------ site login
+
+    /** A login to the site waiting for «Это я» in a bot. state: pending / approved / rejected. */
+    private static final class SiteLogin {
+        final String name, ip;
+        final long created = System.currentTimeMillis();
+        volatile String state = "pending";
+
+        SiteLogin(String name, String ip) {
+            this.name = name;
+            this.ip = ip;
+        }
+    }
+
+    private final Map<String, SiteLogin> siteLogins = new ConcurrentHashMap<>();
+    private final Map<String, Long> siteLastAsk = new ConcurrentHashMap<>();
+    private static final long SITE_LOGIN_LIFE = TimeUnit.MINUTES.toMillis(3);
+
+    /** Asks the player's bots «Вход на сайт — это ты?». Returns {request} or {error}. */
+    public com.google.gson.JsonObject siteLogin(String name, String ip) {
+        com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+        long now = System.currentTimeMillis();
+        siteLogins.values().removeIf(s -> s.created < now - SITE_LOGIN_LIFE);
+        Accounts.Account acc = accounts.get(name);
+        List<Provider> reachable = acc == null ? List.of()
+                : acc.links.keySet().stream().map(providers::get).filter(p -> p != null).toList();
+        if (reachable.isEmpty()) {
+            o.addProperty("error", acc == null || acc.links.isEmpty() ? "not_linked" : "bots_down");
+            return o;
+        }
+        // one request a minute per nick: nobody can flood a player's messages with logins
+        Long last = siteLastAsk.get(acc.name.toLowerCase());
+        if (last != null && now - last < 60_000) {
+            o.addProperty("error", "too_often");
+            o.addProperty("wait", (60_000 - (now - last)) / 1000 + 1);
+            return o;
+        }
+        siteLastAsk.put(acc.name.toLowerCase(), now);
+        String id = token(12);
+        siteLogins.put(id, new SiteLogin(acc.name, ip));
+        for (Provider p : reachable) {
+            p.sendConfirm(acc.links.get(p.id()), "Вход на сайт BeezzLand", acc.name, mask(ip), "w" + id);
+        }
+        o.addProperty("request", id);
+        o.addProperty("name", acc.name);
+        com.google.gson.JsonArray via = new com.google.gson.JsonArray();
+        reachable.forEach(p -> via.add(p.title()));
+        o.add("via", via);
+        return o;
+    }
+
+    public com.google.gson.JsonObject siteLoginStatus(String id) {
+        com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+        SiteLogin s = siteLogins.get(id);
+        if (s == null || s.created < System.currentTimeMillis() - SITE_LOGIN_LIFE) {
+            o.addProperty("state", "expired");
+            return o;
+        }
+        o.addProperty("state", s.state);
+        o.addProperty("name", s.name);
+        if (!s.state.equals("pending")) siteLogins.remove(id); // the answer is read once
+        return o;
+    }
+
+    /** Which messengers a nick is linked to (for the profile page). */
+    public com.google.gson.JsonObject links(String name) {
+        com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+        Accounts.Account acc = accounts.get(name);
+        com.google.gson.JsonArray l = new com.google.gson.JsonArray();
+        if (acc != null) {
+            for (String pid : acc.links.keySet()) {
+                Provider p = providers.get(pid);
+                l.add(p == null ? pid : p.title());
+            }
+            o.addProperty("name", acc.name);
+        }
+        o.add("links", l);
+        return o;
+    }
+
     @Override
     public String onDecision(Provider from, String userId, String requestId, boolean approve) {
+        if (requestId.startsWith("w")) {
+            SiteLogin s = siteLogins.get(requestId.substring(1));
+            if (s == null || !s.state.equals("pending")) return "Этот запрос уже неактуален.";
+            Accounts.Account acc = accounts.get(s.name);
+            if (acc == null || !userId.equals(acc.links.get(from.id()))) return "Это не твой запрос.";
+            s.state = approve ? "approved" : "rejected";
+            if (!approve) log.warn("{} rejected a site login from {}", acc.name, s.ip);
+            return approve ? "Вход на сайт подтверждён ✅" : "Вход на сайт отклонён ❌";
+        }
         PendingConfirm pc = confirms.remove(requestId);
         if (pc == null) {
             return "Этот запрос уже неактуален.";

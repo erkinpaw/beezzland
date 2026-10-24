@@ -16,7 +16,9 @@ real bot token is needed and the main proxy (25565) is not touched.
    then a login from 127.0.0.2 (a «new IP» without touching the network) confirmed by a VK callback button.
 6. Discord: `python fake_discord.py` (REST + gateway WebSocket on 127.0.0.1:8097), enable `discord` with
    `api-base: "http://127.0.0.1:8097/api"`, then `node discordtest.js` — DM link, server-channel messages
-   ignored, button confirmation from a new IP.
+   ignored, button confirmation from a new IP. With `channel: "регистрация"` in the test config,
+   `node channeltest.js` — one «Привязать аккаунт» button in #регистрация (not re-posted after a restart),
+   button → window for the code, private answers, the moderation bot's ticket buttons left alone.
 
 Uses mineflayer from `../../../loadtest/node_modules` (`npm install` there first).
-Last run 18.10.2026: Telegram 11/11, VK 9/9, Discord 9/9, brute force 4/4 — all PASS. `bruteforcetest.js` needs only the fake Telegram.
+Last run 18.10.2026: Telegram 11/11, VK 9/9, Discord 9/9, Discord channel 7/7, brute force 4/4 — all PASS. `bruteforcetest.js` needs only the fake Telegram.

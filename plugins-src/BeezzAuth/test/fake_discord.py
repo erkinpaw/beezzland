@@ -1,6 +1,6 @@
 """Fake Discord (REST + Gateway WebSocket) for testing BeezzAuth's Discord bot. Standard library only.
 
-Bot side:  GET /api/gateway/bot, POST /api/users/@me/channels, POST /api/channels/<id>/messages,
+Bot side:  GET /api/gateway/bot, GET guilds/channels/messages (one #регистрация), POST /api/users/@me/channels, POST /api/channels/<id>/messages,
            POST /api/interactions/<id>/<token>/callback, WebSocket on /ws (Hello → Identify → READY).
 Test side: POST /test/inject {"t": "MESSAGE_CREATE", "d": {...}}, GET /test/sent, GET /test/identify.
 """
@@ -66,6 +66,13 @@ class H(BaseHTTPRequestHandler):
                 return self._json(sent)
             if self.path == "/test/identify":
                 return self._json(identifies)
+            # the registration channel lookup: one server with #регистрация; its messages are what the bot posted
+            if self.path == "/api/users/@me/guilds":
+                return self._json([{"id": "1"}])
+            if self.path == "/api/guilds/1/channels":
+                return self._json([{"id": "chat", "type": 0, "name": "общий"}, {"id": "reg", "type": 0, "name": "регистрация"}])
+            if self.path.startswith("/api/channels/reg/messages"):
+                return self._json([{"author": {"id": "999"}, **x["body"]} for x in sent if x["path"] == "/api/channels/reg/messages"])
         self._json({"message": "404"}, 404)
 
     def do_POST(self):
