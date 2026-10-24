@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Minecraft server setup for Ubuntu 24.04: Java 25, MariaDB, Velocity, Purpur 26.3,
-# plugins, systemd services, daily backups, firewall, website behind nginx (+HTTPS).
+# plugins, systemd services, hourly backups (restic), firewall, website behind nginx (+HTTPS).
 #
 # Run as root from the mc-server folder:   sudo ./setup.sh
 # With a domain (its DNS A record must already point here; www. is added if it exists too):
@@ -27,7 +27,7 @@ log() { echo -e "\n=== $*"; }
 
 log "Packages"
 apt-get update -q
-apt-get install -yq curl jq zstd python3 python3-pymysql mariadb-server ufw ca-certificates gnupg nginx
+apt-get install -yq curl jq zstd restic python3 python3-pymysql mariadb-server ufw ca-certificates gnupg nginx
 
 log "Java 25 (Temurin)"
 if ! java -version 2>&1 | grep -q '"25'; then
@@ -58,6 +58,12 @@ if [[ -n $DOMAIN ]]; then  # the site address goes into the WebTrade calculator 
   jq --arg u "https://$DOMAIN" '.site_url = $u' "$BASE/.secrets.json" > "$BASE/.secrets.tmp" && mv "$BASE/.secrets.tmp" "$BASE/.secrets.json"
 fi
 chown minecraft:minecraft "$BASE/.secrets.json"; chmod 600 "$BASE/.secrets.json"
+# the backup password (scripts/backup.sh): without it the backups can't be read — keep a copy in a password manager
+if [[ ! -f $BASE/.restic-password ]]; then
+  head -c 32 /dev/urandom | base64 | tr -d '/+=' > "$BASE/.restic-password"
+  echo "!!! New backup password in $BASE/.restic-password — copy it somewhere safe"
+fi
+chmod 600 "$BASE/.restic-password"
 S() { jq -r ".$1" "$BASE/.secrets.json"; }
 
 log "MariaDB (localhost only)"

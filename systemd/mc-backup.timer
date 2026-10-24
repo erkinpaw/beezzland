@@ -1,8 +1,9 @@
 [Unit]
-Description=Daily Minecraft backup at 05:00
+Description=Minecraft backup every hour (restic snapshots: 24 hourly, 7 daily, 4 weekly)
 
 [Timer]
-OnCalendar=*-*-* 05:00:00
+OnCalendar=hourly
+RandomizedDelaySec=120
 Persistent=true
 
 [Install]

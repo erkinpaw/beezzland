@@ -1,5 +1,5 @@
 [Unit]
-Description=Minecraft backup (database + worlds)
+Description=Minecraft backup (worlds, players, plugin data, databases) — scripts/backup.sh
 
 [Service]
 Type=oneshot
