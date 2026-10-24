@@ -83,7 +83,7 @@ cat <<EOF
 
 Wipe done. The old season is in $DEST (delete it when you're sure).
 Next, before players arrive:
-  1. Borders + pre-generation of every world (main 10k, nether 3k, End 8k, farm 4k, farm nether 2k):
+  1. Borders + pre-generation of every world (main and farm 10k, both nethers 3k, End 8k):
                                   MC_BASE=$BASE python3 $BASE/scripts/pregen.py   (30–60 min, the server stays up)
   2. Nether / farm world / End are closed again: open them with /beezz open … on schedule.
   3. If CoreProtect uses MariaDB, its old-world log is still in the database (clear with /co purge t:0s or keep for reference).

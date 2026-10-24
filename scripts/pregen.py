@@ -3,9 +3,10 @@
     python3 scripts/pregen.py            set the borders and start Chunky in all worlds (one after another)
     python3 scripts/pregen.py borders    only set the borders
 
-Sizes (PLAN.md): the main world 10k×10k; the nether is wider than main ÷ 8 (room for fortresses
-and bastions), portals there only open within main ÷ 8 (BeezzWorlds); the farm world and its nether
-the same way. Pre-generated to the border: players never wait for new chunks, and nether hyperloops
+Sizes (PLAN.md): the main world and the farm world 10k×10k (honeycomb portals link them 1:1), both nethers
+3k×3k — wider than their overworld ÷ 8 (room for fortresses
+and bastions); portals there only open within the overworld ÷ 8 (BeezzWorlds).
+Pre-generated to the border: players never wait for new chunks, and nether hyperloops
 (boats on blue ice, ~70 blocks/s) don't make the server generate on the fly.
 Reads host/port/password like rcon.py (MC_BASE, default /opt/mc).
 """
@@ -22,8 +23,8 @@ WORLDS = [
     ("minecraft:overworld", ["world"], 10000),
     ("minecraft:the_nether", ["world_nether"], 3000),
     ("minecraft:the_end", ["world_the_end"], 8000),
-    ("minecraft:farm", ["world_minecraft_farm", "farm"], 4000),
-    ("minecraft:farm_nether", ["world_minecraft_farm_nether", "farm_nether"], 2000),
+    ("minecraft:farm", ["world_minecraft_farm", "farm"], 10000),
+    ("minecraft:farm_nether", ["world_minecraft_farm_nether", "farm_nether"], 3000),
 ]
 
 
