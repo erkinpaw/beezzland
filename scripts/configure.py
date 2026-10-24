@@ -159,7 +159,9 @@ def farm_world():
             write(os.path.join(d, "paper-world.yml"), FARM_PAPER)
     p = os.path.join(SURV, "spigot.yml")
     t = read(p)
-    for world in ("farm", "farm_nether"):
+    # Spigot names worlds by folder: "farm" when BeezzWorlds created it (old Purpur installs),
+    # "world_minecraft_farm" for the data pack dimension (now, and the only way on Folia)
+    for world in ("farm", "farm_nether", "world_minecraft_farm", "world_minecraft_farm_nether"):
         block = f"  {world}:{NL}    nerf-spawner-mobs: true{NL}"
         t = re.sub(rf"(?m)^  {world}:{NL}(    .*{NL})*", "", t)  # replace our earlier block
         t = t.replace("world-settings:" + NL, "world-settings:" + NL + block, 1)
@@ -204,7 +206,18 @@ def extras():
     t = yaml_set(t, ["world-settings", "default", "merge-radius", "exp"], "3.0")
     write(p, t)
     p = os.path.join(SURV, "purpur.yml")
-    write(p, yaml_set(read(p), ["world-settings", "default", "mobs", "dolphin", "disable-treasure-searching"], "true"))
+    if os.path.exists(p):  # Folia has no purpur.yml
+        write(p, yaml_set(read(p), ["world-settings", "default", "mobs", "dolphin", "disable-treasure-searching"], "true"))
+
+
+def folia():
+    """Folia only: how many threads tick regions. The load test had 4 regions (one per dimension, the main
+    world with all its players in one), so more threads than that gain nothing; the rest of the cores go
+    to chunk loading, GC and the proxy. FOLIA_THREADS overrides."""
+    p = os.path.join(SURV, "config", "paper-global.yml")
+    t = read(p)
+    if re.search(r"(?m)^threaded-regions:", t):
+        write(p, yaml_set(t, ["threaded-regions", "threads"], str(os.environ.get("FOLIA_THREADS", "4"))))
 
 
 def main():
@@ -252,6 +265,7 @@ def main():
     p = os.path.join(SURV, "config", "paper-world-defaults.yml")
     write(p, yaml_set(read(p), ["anticheat", "anti-xray", "enabled"], "true"))
     extras()
+    folia()
 
     # --- Farm world: more mobs, spawner mobs without AI (see farm_world()) ---
     farm_world()

@@ -56,6 +56,13 @@ move() {  # move a path into the season folder, keeping its relative layout
   fi
 }
 move world
+# the new world keeps what is ours, not the old map: the data pack (farm world, farm nether, duel arenas)
+# and the per-world settings configure.py wrote (paper-world.yml of each dimension)
+mkdir -p "$SURV/world"
+[[ -d $DEST/world/datapacks ]] && cp -r "$DEST/world/datapacks" "$SURV/world/"
+(cd "$DEST/world" && find dimensions -name paper-world.yml 2>/dev/null) | while read -r f; do
+  mkdir -p "$SURV/world/$(dirname "$f")" && cp "$DEST/world/$f" "$SURV/world/$f"
+done
 move bluemap                                     # BlueMap tiles of the old world
 move plugins/Pl3xMap/web/tiles                   # Pl3xMap tiles of the old world
 for f in accounts.yml containers.yml warehouse.yml; do move "plugins/WebTrade/$f"; done

@@ -6,6 +6,7 @@
 # With a domain (its DNS A record must already point here; www. is added if it exists too):
 #   sudo DOMAIN=beezzland.ru EMAIL=you@example.com ./setup.sh
 # Phones/consoles too (Geyser + Floodgate, UDP 19132): add BEDROCK=1
+# Folia instead of Purpur (multithreaded regions, needs 6+ cores): add CORE=folia [FOLIA_THREADS=4]
 # Safe to re-run: existing worlds, secrets and database are kept.
 set -euo pipefail
 
@@ -17,6 +18,7 @@ PROXY_MEM=${PROXY_MEM:-512M}
 DOMAIN=${DOMAIN:-}                  # empty = site on http://<server-ip>/ without HTTPS
 EMAIL=${EMAIL:-}                    # for Let's Encrypt expiry notices
 BEDROCK=${BEDROCK:-0}               # 1 = Geyser + Floodgate: phones/consoles can join (UDP 19132)
+CORE=${CORE:-purpur}                # purpur (one main thread) or folia (regions on FOLIA_THREADS threads, default 4)
 BASE=/opt/mc
 SRC=$(cd "$(dirname "$0")" && pwd)
 
@@ -69,8 +71,15 @@ GRANT ALL PRIVILEGES ON $(S db_name).* TO '$(S db_user)'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
-log "Purpur $MC_VERSION"
-curl -fsSL -o "$BASE/survival/server.jar" "https://api.purpurmc.org/v2/purpur/$MC_VERSION/latest/download"
+if [[ $CORE == folia ]]; then
+  # Folia: regions tick on several threads (load test in PLAN.md); our plugins and the data pack support both
+  log "Folia $MC_VERSION"
+  FOLIA_URL=$(curl -fsSL "https://fill.papermc.io/v3/projects/folia/versions/$MC_VERSION/builds/latest" | jq -r '.downloads["server:default"].url')
+  curl -fsSL -o "$BASE/survival/server.jar" "$FOLIA_URL"
+else
+  log "Purpur $MC_VERSION"
+  curl -fsSL -o "$BASE/survival/server.jar" "https://api.purpurmc.org/v2/purpur/$MC_VERSION/latest/download"
+fi
 echo "eula=true" > "$BASE/survival/eula.txt"
 # keep the backend private from the very first start (Velocity is the only way in)
 [[ -f $BASE/survival/server.properties ]] ||
@@ -101,6 +110,11 @@ sed -e "s/@MEM@/$PROXY_MEM/g"  "$SRC/systemd/mc-proxy.service"    > /etc/systemd
 cp "$SRC/systemd/mc-backup.service" "$SRC/systemd/mc-backup.timer" /etc/systemd/system/
 systemctl daemon-reload
 
+# The farm world, its nether and the duel arenas are data pack dimensions: they must be there before the
+# first start, or BeezzWorlds creates old-style worlds (Purpur) or can't start at all (Folia)
+mkdir -p "$BASE/survival/world/datapacks"
+cp -r "$SRC/configs/survival/world/datapacks/." "$BASE/survival/world/datapacks/"
+chown -R minecraft:minecraft "$BASE/survival/world"
 # First start generates default configs; then we patch them.
 if [[ ! -f $BASE/survival/config/paper-global.yml || ! -f $BASE/proxy/forwarding.secret ]]; then
   log "First start (generating configs, takes 1-3 min)"
@@ -117,7 +131,7 @@ log "Configure"
 rm -rf "$BASE/site" && cp -r "$SRC/site" "$BASE/site"
 # our own plugin configs (TAB look, etc.) on top of the generated defaults
 cp -r "$SRC/configs/." "$BASE/" && chown -R minecraft:minecraft "$BASE"
-sudo -u minecraft python3 "$BASE/scripts/configure.py" "$BASE"
+sudo -u minecraft env FOLIA_THREADS="${FOLIA_THREADS:-4}" python3 "$BASE/scripts/configure.py" "$BASE"
 
 log "Website"
 # the ban list page reads LibertyBans from our MariaDB; the site's private settings live outside its folder
