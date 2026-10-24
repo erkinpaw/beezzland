@@ -621,6 +621,16 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         if (duels.containsKey(e.getPlayer().getUniqueId())) e.setCancelled(true);
     }
 
+    /**
+     * Advancements are one per player for the whole server (every world shares them), so the arena must not
+     * give any: the kit's iron armour would count as «Suit Up», the bow as a shot hit, and so on.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onAdvancement(com.destroystokyo.paper.event.player.PlayerAdvancementCriterionGrantEvent e) {
+        Player p = e.getPlayer();
+        if (duels.containsKey(p.getUniqueId()) || p.getWorld().equals(arenas.world())) e.setCancelled(true);
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
         if (e.getBlock().getWorld().equals(arenas.world()) && !e.getPlayer().isOp()) e.setCancelled(true);
