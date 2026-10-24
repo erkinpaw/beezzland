@@ -15,7 +15,10 @@ const tickSync = require("./ticksync");
 
 const [minutes = 15, port = 25590, scale = 1] = process.argv.slice(2);
 const JOIN_GAP_MS = 3200;           // Velocity: one login per IP every 3 s
-const RADIUS = 2900;                // inside the pre-generated area
+// LT_SPREAD=5000: main-world bases 300–5000 blocks from spawn and at least 300 apart, explorers within 4900
+// (needs the main world pre-generated to that radius). Default: bases 150–1550, explorers within 2900.
+const SPREAD = Number(process.env.LT_SPREAD || 0);
+const RADIUS = SPREAD ? SPREAD - 100 : 2900;  // inside the pre-generated area
 const SPAWN = [32, -32];
 const FY = 200;                     // farms float at y=200 (farms.py)
 const RCON = path.join(__dirname, "..", "scripts", "rcon.py");
@@ -37,7 +40,13 @@ add(13, { world: "minecraft:overworld", kind: "base", y: 120, speed: 2 });
 add(1, { world: "minecraft:overworld", kind: "stand", at: FARM.mainIron });
 add(1, { world: "minecraft:overworld", kind: "stand", at: FARM.mainWool });
 add(5, { world: "minecraft:the_nether", kind: "base", y: 100, speed: 2, spread: 400 });
-add(5, { world: "minecraft:the_nether", kind: "explore", y: 100, speed: 4, radius: 900 });
+if (process.env.LT_HYPERLOOP) {
+  // nether hyperloops: boats on blue ice, ~70 blocks/s, straight along x or z from the hub at 0,0 to a spot within
+  // ±1450 and back — the fastest way players load chunks (needs the nether pre-generated to its 3k border)
+  add(5, { world: "minecraft:the_nether", kind: "hyperloop", y: 100, speed: 70, radius: 1450 });
+} else {
+  add(5, { world: "minecraft:the_nether", kind: "explore", y: 100, speed: 4, radius: 900 });
+}
 for (const spot of ["ironA", "ironB", "woolA", "woolB", "spawner"]) add(2, { world: "minecraft:farm", kind: "stand", at: FARM[spot] });
 add(5, { world: "minecraft:farm", kind: "tour", y: FY + 2, speed: 4 });
 add(5, { world: "minecraft:farm_nether", kind: "base", y: 100, speed: 2, spread: 200 });
@@ -53,11 +62,28 @@ const rcon = (...cmds) => new Promise((resolve) =>
 // stable pseudo-random per bot, so every run puts bases in the same places
 const rnd = (seed) => { const x = Math.sin(seed * 9301 + 49297) * 233280; return x - Math.floor(x); };
 
+// main-world bases for LT_SPREAD: the same spots every run (seeded), no two closer than 300 blocks
+const bases = [];
+function spreadBase(i) {
+  while (bases.length <= i) {
+    for (let k = 0; ; k++) {
+      const seed = 1000 + bases.length * 97 + k;
+      const a = rnd(seed) * Math.PI * 2, d = 300 + rnd(seed + 7) * (SPREAD - 300);
+      const p = [Math.round(SPAWN[0] + Math.cos(a) * d), Math.round(SPAWN[1] + Math.sin(a) * d)];
+      if (bases.every((b) => Math.hypot(b[0] - p[0], b[1] - p[1]) >= 300)) { bases.push(p); break; }
+    }
+  }
+  return bases[i];
+}
+
 async function place(bot, role, idx) {
   let x, y, z;
   if (role.kind === "stand") [x, y, z] = role.at.map((v, k) => v + (k === 0 ? role.i * 2 : 0));
   else if (role.kind === "tour") [x, y, z] = [FARM.ironA[0], role.y, FARM.ironA[2]];
-  else {
+  else if (SPREAD && role.kind === "base" && role.world === "minecraft:overworld") {
+    const [bx, bz] = spreadBase(role.i);
+    [x, y, z] = [bx, role.y, bz];
+  } else {
     const a = rnd(idx) * Math.PI * 2, d = role.kind === "explore" ? 0 : 150 + rnd(idx + 99) * (role.spread || 1400);
     [x, y, z] = [Math.round(SPAWN[0] + Math.cos(a) * d), role.y, Math.round(SPAWN[1] + Math.sin(a) * d)];
   }
@@ -98,6 +124,16 @@ async function act(bot, role, idx) {
       const sign = Math.floor(t * step / 24) % 2 === 0 ? 1 : -1;
       bot.entity.position = pos.plus(dir.scaled(step * sign));
       if (t % 600 === 0) dir = new Vec3(Math.cos(t + idx), 0, Math.sin(t + idx));
+    } else if (role.kind === "hyperloop") {
+      // ride to the target, then back to the hub, then a new target on the other axis
+      if (!bot.hyper || Math.hypot(bot.hyper[0] - pos.x, bot.hyper[1] - pos.z) < step) {
+        const toHub = bot.hyper && !(bot.hyper[0] === 0 && bot.hyper[1] === 0);
+        const r = role.radius, far = (rnd(t * 13 + idx) * 2 - 1) * r;
+        bot.leg = (bot.leg || 0) + 1;
+        bot.hyper = toHub ? [0, 0] : (bot.leg + idx) % 2 ? [Math.round(far), 0] : [0, Math.round(far)];
+      }
+      const dx = bot.hyper[0] - pos.x, dz = bot.hyper[1] - pos.z, d = Math.hypot(dx, dz);
+      bot.entity.position = pos.plus(new Vec3(dx / d, 0, dz / d).scaled(Math.min(step, d)));
     } else if (role.kind === "tour") {
       const [tx, , tz] = tour[target];
       const d = Math.hypot(tx - pos.x, tz - pos.z);

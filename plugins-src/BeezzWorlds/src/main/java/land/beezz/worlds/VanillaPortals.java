@@ -41,6 +41,27 @@ final class VanillaPortals implements Listener {
             if (e.getEntity() instanceof Player p) {
                 Msg.closed(p, Stage.NETHER);
             }
+            return;
+        }
+        // A nether is bigger than its overworld ÷ 8 (room for fortresses and bastions); a portal out there would
+        // lead past the overworld's border, and the game would squeeze every such exit onto the border line.
+        // So portals only open where the other side is inside the border: hyperloops do the rest.
+        World up = worlds.isMainNether(w) ? worlds.main() : worlds.isFarmNether(w) ? worlds.farm() : null;
+        if (up == null) {
+            return;
+        }
+        double half = up.getWorldBorder().getSize() / 2 / 8 - 2;  // 2 blocks: room for the frame on the far side
+        Location c = up.getWorldBorder().getCenter();
+        double cx = c.getX() / 8, cz = c.getZ() / 8;
+        boolean outside = e.getBlocks().stream().anyMatch(b ->
+                Math.abs(b.getX() - cx) > half || Math.abs(b.getZ() - cz) > half);
+        if (outside) {
+            e.setCancelled(true);
+            if (e.getEntity() instanceof Player p) {
+                int r = (int) half;
+                Msg.actionBar(p, "<#F87171>Здесь портал не откроется:</#F87171> <gray>снаружи край мира. Порталы — ближе "
+                        + r + " блоков к центру (x и z от " + (int) (cx - r) + " до " + (int) (cx + r) + ").");
+            }
         }
     }
 
