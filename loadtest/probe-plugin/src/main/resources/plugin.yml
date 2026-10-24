@@ -1,0 +1,13 @@
+name: LtProbe
+version: '${version}'
+main: land.beezz.ltprobe.LtProbe
+api-version: '26.3'
+folia-supported: true
+description: Load test only — reads and empties the test farms' chests on any server, Folia included
+commands:
+  ltchest:
+    description: ltchest <count|clear> <world-key> <x> <y> <z> [tag]
+    permission: ltprobe.use
+permissions:
+  ltprobe.use:
+    default: op

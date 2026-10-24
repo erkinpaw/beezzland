@@ -1,0 +1,8 @@
+{
+  "pack": {
+    "description": "BeezzLand: the farm world, its nether and the duel arenas as dimensions (Folia can't create worlds at runtime)",
+    "pack_format": 121,
+    "min_format": 121,
+    "max_format": 121
+  }
+}

@@ -57,7 +57,7 @@ final class Snapshot {
         p.setFallDistance(0);
         p.setGameMode(GameMode.valueOf(y.getString("gamemode", "SURVIVAL")));
         Location back = y.getLocation("location");
-        if (back != null && back.getWorld() != null) p.teleport(back);
+        if (back != null && back.getWorld() != null) p.teleportAsync(back);
         file.delete();
     }
 }

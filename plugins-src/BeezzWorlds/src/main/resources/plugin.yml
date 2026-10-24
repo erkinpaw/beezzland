@@ -4,6 +4,7 @@ main: land.beezz.worlds.BeezzWorlds
 api-version: '26.3'
 description: Миры BeezzLand — открытие по неделям, мир ферм и портал из пчелиных сот
 load: STARTUP
+folia-supported: true
 
 commands:
   beezz:

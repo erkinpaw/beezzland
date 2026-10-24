@@ -4,6 +4,7 @@ main: land.beezz.duels.BeezzDuels
 api-version: '26.3'
 description: Жужики (валюта сайта), дуэли на ставку и /donate за жужики
 load: POSTWORLD
+folia-supported: true
 
 commands:
   duel:

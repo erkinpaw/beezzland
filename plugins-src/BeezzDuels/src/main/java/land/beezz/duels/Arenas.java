@@ -4,58 +4,76 @@ import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.plugin.Plugin;
 
 import java.util.BitSet;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * The duel world: empty void with a small honeycomb-rimmed arena every 300 blocks along X.
  * Arenas are built on first use; nobody can enter the world except through a duel.
+ * <p>
+ * The world is the void dimension minecraft:duels from our data pack (Folia can't create worlds
+ * at runtime); without the data pack (an older install on Purpur) it is created here as before.
+ * Arena blocks and leftovers are handled by the region that owns the arena (Folia).
  */
 final class Arenas {
 
     static final String WORLD = "duels";
     private static final int Y = 100, R = 15, SPACING = 300, WALL = 4, CEILING = 14;
 
+    private final Plugin plugin;
     private final World world;
     private final BitSet busy = new BitSet();
     private final int count;
 
-    Arenas(int count) {
+    Arenas(Plugin plugin, int count) {
+        this.plugin = plugin;
         this.count = count;
-        World w = Bukkit.getWorld(WORLD);
+        World w = Bukkit.getWorld(NamespacedKey.minecraft(WORLD));
+        if (w == null) w = Bukkit.getWorld(WORLD);
         if (w == null) {
             w = new WorldCreator(WORLD).generator(new ChunkGenerator() { }) // nothing generated: void
                     .generateStructures(false).createWorld();
         }
         world = w;
-        world.setDifficulty(Difficulty.NORMAL);
-        world.setSpawnLocation(0, Y + 1, 0);
-        world.setStorm(false);
-        world.setTime(6000);
+        World fw = w;
+        // world-wide settings belong to the global region on Folia
+        Bukkit.getGlobalRegionScheduler().run(plugin, t -> {
+            fw.setDifficulty(Difficulty.NORMAL);
+            fw.setSpawnLocation(0, Y + 1, 0);
+            fw.setStorm(false);
+            fw.setTime(6000);
+        });
     }
 
     World world() {
         return world;
     }
 
-    /** Takes a free arena; -1 if all are busy. */
-    synchronized int take() {
+    /** Takes a free arena number; -1 if all are busy. Build it with {@link #build} before use. */
+    synchronized int reserve() {
         int i = busy.nextClearBit(0);
         if (i >= count) return -1;
         busy.set(i);
-        build(i);
         return i;
     }
 
-    synchronized void free(int i) {
-        clear(i);
-        busy.clear(i);
+    void free(int i) {
+        int cx = i * SPACING;
+        Bukkit.getRegionScheduler().run(plugin, world, cx >> 4, 0, t -> {
+            clear(i);
+            synchronized (this) {
+                busy.clear(i);
+            }
+        });
     }
 
     Location spawn(int arena, boolean first) {
@@ -70,10 +88,22 @@ final class Arenas {
         return l.getWorld() == world && Math.abs(l.getX() - cx) <= R + 1 && Math.abs(l.getZ()) <= R + 1 && l.getY() > Y - 5;
     }
 
-    private void build(int arena) {
+    /** Loads the arena's chunks and builds it (once) in the region that owns it; completes when ready. */
+    CompletableFuture<Void> build(int arena) {
         int cx = arena * SPACING;
-        world.setTime(6000);
-        world.getChunkAt(cx >> 4, 0).load(true);
+        CompletableFuture<Void> done = new CompletableFuture<>();
+        CompletableFuture.allOf(world.getChunkAtAsync((cx - R) >> 4, (-R) >> 4), world.getChunkAtAsync((cx + R) >> 4, R >> 4))
+                .thenRun(() -> Bukkit.getRegionScheduler().run(plugin, world, cx >> 4, 0, t -> {
+                    try {
+                        buildNow(cx);
+                    } finally {
+                        done.complete(null);
+                    }
+                }));
+        return done;
+    }
+
+    private void buildNow(int cx) {
         if (world.getBlockAt(cx, Y, 0).getType() == Material.HONEYCOMB_BLOCK) return; // built before
         for (int x = -R; x <= R; x++) {
             for (int z = -R; z <= R; z++) {

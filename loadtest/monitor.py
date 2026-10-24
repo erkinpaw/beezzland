@@ -15,6 +15,9 @@ out_name = sys.argv[2] if len(sys.argv) > 2 else "loadtest.csv"
 strip = lambda s: re.sub(r"§.", "", s)
 
 
+FOLIA = {}
+
+
 def query():
     import json, socket
     s = json.load(open(os.path.join(BASE, ".secrets.json")))
@@ -23,9 +26,17 @@ def query():
         tps = strip(rcon.packet(sock, 2, 2, "tps")[1])
         mspt = strip(rcon.packet(sock, 2, 2, "mspt")[1])
         lst = strip(rcon.packet(sock, 2, 2, "list")[1])
+    players = int(re.search(r"(\d+)", lst).group(1))
+    if "Health Report" in tps:
+        # Folia: no single main thread. tps = the slowest region; "mspt" = all tick work in ms per 50 ms
+        # (utilisation 124% → 62 ms, the same total work a Purpur MSPT of 62 would be); max = busiest region
+        num = lambda key: float(re.search(key + r"[^\d]*(\d+(?:[.,]\d+)?)", tps).group(1).replace(",", "."))
+        util = num("Utilisation:")
+        FOLIA.update(median=num("Median Region TPS:"), util=util, regions=int(num("Total regions:")))
+        top = [float(x.replace(",", ".")) for x in re.findall(r"util at (\d+(?:[.,]\d+)?) MSPT", tps)]
+        return num("Lowest Region TPS:"), round(util / 2, 1), max(top) if top else None, players
     t = [float(x) for x in re.findall(r"\*?(\d+(?:[.,]\d+)?)", tps.split(":", 1)[-1].replace(",", "."))[:3]]
     m = re.findall(r"(\d+(?:[.,]\d+)?)/(\d+(?:[.,]\d+)?)/(\d+(?:[.,]\d+)?)", mspt.replace(",", "."))
-    players = int(re.search(r"(\d+)", lst).group(1))
     return t[0] if t else None, float(m[0][0]) if m else None, float(m[0][2]) if m else None, players
 
 
@@ -49,7 +60,8 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     out = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), out_name), "w", newline="")
     w = csv.writer(out)
-    w.writerow(["time_s", "players", "tps_1m", "mspt_avg_5s", "mspt_max_5s", "cpu_cores", "rss_mb"])
+    w.writerow(["time_s", "players", "tps_1m", "mspt_avg_5s", "mspt_max_5s", "cpu_cores", "rss_mb",
+                "folia_median_tps", "folia_util_pct", "folia_regions"])
     t0 = time.time()
     last = None
     while time.time() - t0 < dur:
@@ -59,7 +71,8 @@ def main():
             now = time.time()
             cores = round((cpu - last[0]) / (now - last[1]), 2) if last else ""
             last = (cpu, now)
-            line = [round(now - t0), players, tps, avg, mx, cores, round(rss)]
+            line = [round(now - t0), players, tps, avg, mx, cores, round(rss),
+                    FOLIA.get("median", ""), FOLIA.get("util", ""), FOLIA.get("regions", "")]
             w.writerow(line); out.flush()
             print(f"[server] t={line[0]:>4}s players={players:>3} tps={tps} mspt avg={avg} max={mx} cpu={cores} cores rss={round(rss)} MB", flush=True)
         except Exception as e:  # server busy or restarting: keep polling

@@ -1,6 +1,7 @@
 package land.beezz.worlds;
 
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -14,8 +15,10 @@ import java.util.Set;
  * Which worlds exist and which stages are open.
  * <p>
  * Main worlds are the server's own overworld / nether / end. The farm world and its nether
- * are extra worlds created by this plugin; they always exist (so they can be pre-generated),
- * but nobody gets in until the FARM stage is opened.
+ * are extra dimensions from our data pack (world/datapacks/beezz-dimensions: minecraft:farm,
+ * minecraft:farm_nether) — Folia can't create worlds at runtime, a data pack works on both.
+ * Without the data pack (an older install on Purpur) they are created here as before.
+ * They always exist (so they can be pre-generated), but nobody gets in until FARM is opened.
  */
 public final class Worlds {
 
@@ -38,8 +41,13 @@ public final class Worlds {
                 open.add(stage);
             }
         }
-        farm = new WorldCreator(FARM).environment(World.Environment.NORMAL).createWorld();
-        farmNether = new WorldCreator(FARM_NETHER).environment(World.Environment.NETHER).createWorld();
+        farm = dimension(FARM, World.Environment.NORMAL);
+        farmNether = dimension(FARM_NETHER, World.Environment.NETHER);
+    }
+
+    private static World dimension(String name, World.Environment env) {
+        World w = Bukkit.getWorld(NamespacedKey.minecraft(name));
+        return w != null ? w : new WorldCreator(name).environment(env).createWorld();
     }
 
     public void save() throws IOException {
@@ -77,11 +85,11 @@ public final class Worlds {
     }
 
     public boolean isFarm(World w) {
-        return w.equals(farm);
+        return w != null && w.equals(farm);
     }
 
     public boolean isFarmNether(World w) {
-        return w.equals(farmNether);
+        return w != null && w.equals(farmNether);
     }
 
     /** The main nether: any nether world that is not the farm's own. */

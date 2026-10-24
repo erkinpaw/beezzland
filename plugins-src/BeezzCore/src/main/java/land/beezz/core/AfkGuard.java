@@ -37,7 +37,10 @@ final class AfkGuard implements Listener {
     }
 
     void start() {
-        Bukkit.getScheduler().runTaskTimer(plugin, this::check, 20L * 30, 20L * 30);
+        // Folia: a world-wide timer, then each player is checked by the region that owns them
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, t -> {
+            for (Player p : Bukkit.getOnlinePlayers()) p.getScheduler().run(plugin, x -> check(p), null);
+        }, 20L * 30, 20L * 30);
     }
 
     private void active(Player p) {
@@ -55,12 +58,12 @@ final class AfkGuard implements Listener {
         lastActive.put(p.getUniqueId(), System.currentTimeMillis() - minutes * 60000);
     }
 
-    private void check() {
+    private void check(Player p) {
         long now = System.currentTimeMillis();
         double fallback = plugin.getConfig().getDouble("afk.default-hours", 2);
         long warnBefore = plugin.getConfig().getLong("afk.warn-minutes", 5) * 60000;
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (p.hasPermission("beezz.afk.unlimited")) continue;
+        {
+            if (p.hasPermission("beezz.afk.unlimited")) return;
             double hours = Ranks.afkHours(p, fallback);
             long limit = (long) (hours * 3600_000);
             long idle = now - lastActive.getOrDefault(p.getUniqueId(), now);

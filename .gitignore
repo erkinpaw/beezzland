@@ -7,3 +7,5 @@ __pycache__/
 # local test artifacts
 loadtest/*.log
 sessions.json
+loadtest/probe-plugin/build/
+loadtest/probe-plugin/.gradle/

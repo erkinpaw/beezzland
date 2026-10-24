@@ -64,7 +64,7 @@ final class Donate {
                             + r.price() + " жужиков"))
                     .tooltip(MM.deserialize(String.join("\n", r.perks())))
                     .width(220)
-                    .action(DialogAction.customClick((v, aud) -> later(() -> confirm(p, r)), ONCE)).build());
+                    .action(DialogAction.customClick((v, aud) -> later(p, () -> confirm(p, r)), ONCE)).build());
         }
         if (!site.isEmpty()) {
             buttons.add(ActionButton.builder(MM.deserialize("<#93C5FD>Купить за рубли на сайте"))
@@ -91,9 +91,9 @@ final class Donate {
                 .base(DialogBase.builder(MM.deserialize("<#FACC15><bold>Покупка")).body(List.of(DialogBody.plainMessage(MM.deserialize(body), 300))).build())
                 .type(DialogType.confirmation(
                         ActionButton.builder(MM.deserialize("<#34D399>Купить")).width(120)
-                                .action(DialogAction.customClick((v, aud) -> later(() -> buy(p, r)), ONCE)).build(),
+                                .action(DialogAction.customClick((v, aud) -> later(p, () -> buy(p, r)), ONCE)).build(),
                         ActionButton.builder(MM.deserialize("<#F87171>Отмена")).width(120)
-                                .action(DialogAction.customClick((v, aud) -> later(() -> open(p)), ONCE)).build()))));
+                                .action(DialogAction.customClick((v, aud) -> later(p, () -> open(p)), ONCE)).build()))));
     }
 
     private void buy(Player p, Rank r) {
@@ -110,19 +110,24 @@ final class Donate {
         }
         // accumulate: a second purchase of the same rank adds days instead of replacing the timer
         String cmd = "lp user " + p.getName() + " parent addtemp " + r.id() + " " + days + "d accumulate";
-        if (!Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)) {
-            try {
-                store.add(p.getUniqueId(), p.getName(), r.price(), "возврат: " + reason);
-            } catch (Exception ignored) {
+        // console commands belong to the global region (Folia); the thanks go back to the player's region
+        Bukkit.getGlobalRegionScheduler().run(plugin, t -> {
+            if (!Bukkit.dispatchCommand(Bukkit.getConsoleSender(), cmd)) {
+                try {
+                    store.add(p.getUniqueId(), p.getName(), r.price(), "возврат: " + reason);
+                } catch (Exception ignored) {
+                }
+                say(p, "<#F87171>Не получилось выдать ранг, жужики вернули. Напиши администрации.");
+                plugin.getLogger().warning("donate: '" + cmd + "' failed");
+                return;
             }
-            say(p, "<#F87171>Не получилось выдать ранг, жужики вернули. Напиши администрации.");
-            plugin.getLogger().warning("donate: '" + cmd + "' failed");
-            return;
-        }
-        changed.run();
-        plugin.getLogger().info("donate: " + p.getName() + " bought " + r.id() + " for " + r.price() + " жужиков");
-        say(p, "<#34D399>Спасибо!</#34D399> <gray>Теперь у тебя</gray> <" + r.color() + ">" + r.title() + "</" + r.color() + "><gray> на " + days + " дней.");
-        p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
+            changed.run();
+            plugin.getLogger().info("donate: " + p.getName() + " bought " + r.id() + " for " + r.price() + " жужиков");
+            later(p, () -> {
+                say(p, "<#34D399>Спасибо!</#34D399> <gray>Теперь у тебя</gray> <" + r.color() + ">" + r.title() + "</" + r.color() + "><gray> на " + days + " дней.");
+                p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.7f, 1.2f);
+            });
+        });
     }
 
     private long balance(Player p) {
@@ -133,9 +138,9 @@ final class Donate {
         }
     }
 
-    /** Dialog clicks may arrive off the main thread; commands and sounds need it. */
-    private void later(Runnable r) {
-        Bukkit.getScheduler().runTask(plugin, r);
+    /** Dialog clicks may arrive off the main thread; the player's own region does the rest. */
+    private void later(Player p, Runnable r) {
+        p.getScheduler().run(plugin, t -> r.run(), null);
     }
 
     private static void say(Player p, String mini) {

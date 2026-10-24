@@ -4,6 +4,7 @@ main: land.beezz.core.BeezzCore
 api-version: '26.3'
 description: BeezzLand — приветствие, /rules, /links, подсказки, карточка игрока, AFK и лимит пластинок
 softdepend: [LuckPerms, PlaceholderAPI]
+folia-supported: true
 
 commands:
   rules:

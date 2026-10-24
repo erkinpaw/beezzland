@@ -15,7 +15,8 @@ public final class BeezzWorlds extends JavaPlugin {
         BedrockScrambler scrambler = new BedrockScrambler(); // seed protection for every new chunk
         getServer().getPluginManager().registerEvents(scrambler, this);
         BedrockScrambler.attach(getServer().getWorlds(), scrambler);
-        getServer().getScheduler().runTask(this, this::start);
+        // Folia: no main thread; the global region runs world-wide work (Paper runs it on the main thread)
+        getServer().getGlobalRegionScheduler().run(this, t -> start());
     }
 
     private void start() {
@@ -28,7 +29,7 @@ public final class BeezzWorlds extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new VanillaPortals(worlds), this);
         getServer().getPluginManager().registerEvents(honey, this);
-        getServer().getScheduler().runTaskTimer(this, honey::tickParticles, 20L, 4L);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this, t -> honey.tickParticles(), 20L, 4L);
         Golems.start(this, worlds); // iron farms work without beds; farm-world golems have no AI
 
         BeezzCommand command = new BeezzCommand(worlds, honey);

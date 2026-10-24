@@ -165,7 +165,33 @@ def stand_spot(kind, x, z):
     return {"iron": (x + 4, Y + 1, z + 12), "wool": (x + 4, Y + 1, z + 4), "spawner": (x + 7, Y, z)}[kind]
 
 
+def probe_log():
+    """Folia has no /forceload and no /data for blocks: then the LtProbe plugin reads the chests (LT_PROBE=1)."""
+    return os.path.join(BASE, "survival", "plugins", "LtProbe", "chests.log") if os.environ.get("LT_PROBE") else None
+
+
+def count_probe(r, log):
+    import time
+    start = os.path.getsize(log) if os.path.exists(log) else 0
+    wanted = []
+    for i, (w, kind, x, z) in enumerate(FARMS):
+        pos = chest_of(kind, x, z)
+        if pos:
+            r(f"ltchest count {w} {pos[0]} {pos[1]} {pos[2]} {i}")
+            wanted.append(i)
+    time.sleep(5)
+    got = {}
+    with open(log, encoding="utf-8") as f:
+        f.seek(start)
+        for line in f:
+            tag, _, items = line.strip().partition(chr(9))
+            got[int(tag)] = {k: int(v) for k, v in (kv.split("=") for kv in items.split(",") if "=" in kv)}
+    return [{"world": FARMS[i][0], "kind": FARMS[i][1], "x": FARMS[i][2], "z": FARMS[i][3], "items": got.get(i, {})} for i in wanted]
+
+
 def count(r):
+    if probe_log():
+        return count_probe(r, probe_log())
     out = []
     for w, kind, x, z in FARMS:
         pos = chest_of(kind, x, z)
@@ -200,7 +226,9 @@ def main():
     elif what == "clear":
         for w, kind, x, z in FARMS:
             pos = chest_of(kind, x, z)
-            if pos:
+            if pos and probe_log():
+                r(f"ltchest clear {w} {pos[0]} {pos[1]} {pos[2]}")
+            elif pos:
                 r(in_world(w, f"forceload add {pos[0]} {pos[2]}"))
                 r(in_world(w, f"data merge block {pos[0]} {pos[1]} {pos[2]} {{Items:[]}}"))
                 r(in_world(w, f"forceload remove {pos[0]} {pos[2]}"))

@@ -43,7 +43,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
-import org.bukkit.scheduler.BukkitTask;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -60,12 +60,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Жужики (the site currency: earned by daily login and events, never sold) and duels for them:
  * {@code /duel Ник 50 [кит]} → the other player gets a window «Принять / Отказаться» → both stakes are
  * held, both go to an arena with the same kit, the winner takes the pot minus the server's cut.
  * Survival inventories never enter the arena: they are saved to disk and given back after the fight.
+ * <p>
+ * Runs on Paper/Purpur and on Folia: anything done to a player goes through that player's own scheduler
+ * ({@link #on}), timers through the global region ({@link #later}), arena blocks through the arena's region.
  */
 public final class BeezzDuels extends JavaPlugin implements Listener, TabExecutor {
 
@@ -84,9 +88,9 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     private int pairPerDay;
     private boolean sameIp;
     private ZoneId zone;
-    private final Map<UUID, Request> requests = new HashMap<>();
-    private final Map<UUID, Duel> duels = new HashMap<>();
-    private final Map<Duel, BukkitTask> timeouts = new HashMap<>();
+    private final Map<UUID, Request> requests = new ConcurrentHashMap<>();
+    private final Map<UUID, Duel> duels = new ConcurrentHashMap<>();
+    private final Map<Duel, ScheduledTask> timeouts = new ConcurrentHashMap<>();
     private final Map<UUID, Long> lastHurt = new ConcurrentHashMap<>();
     private volatile boolean dirty = true;
 
@@ -115,7 +119,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
-        arenas = new Arenas(c.getInt("duel.arenas", 8));
+        arenas = new Arenas(this, c.getInt("duel.arenas", 8));
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("duel").setExecutor(this);
         getCommand("duel").setTabCompleter(this);
@@ -123,15 +127,16 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         getCommand("jujik").setTabCompleter(this);
         donate = new Donate(this, store, c.getConfigurationSection("donate"), () -> dirty = true);
         getCommand("donate").setExecutor(this);
-        getServer().getScheduler().runTaskTimerAsynchronously(this, this::export, 40L, 600L);
+        getServer().getAsyncScheduler().runAtFixedRate(this, t -> export(), 2, 30, TimeUnit.SECONDS);
         // skins can change any time (/skin): look at online players once a minute, only changes hit the database
-        getServer().getScheduler().runTaskTimer(this, () -> Bukkit.getOnlinePlayers().forEach(this::recordSkin), 200L, 1200L);
+        getServer().getGlobalRegionScheduler().runAtFixedRate(this,
+                t -> Bukkit.getOnlinePlayers().forEach(p -> on(p, () -> recordSkin(p))), 200L, 1200L);
         getLogger().info("Duels ready: " + c.getInt("duel.arenas", 8) + " arenas, commission " + commission + "%");
     }
 
     @Override
     public void onDisable() {
-        // a restart in the middle of a fight: give everyone their things back, return the stakes
+        // a restart in the middle of a fight: return the stakes; things come back on the next join (pending file)
         for (Duel d : new ArrayList<>(duels.values())) end(d, null, "сервер перезапускается", true);
         if (store != null) store.close();
     }
@@ -235,13 +240,10 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         to.sendMessage(MM.deserialize(P + "<white>" + from.getName() + "</white> <gray>вызывает тебя на дуэль ("
                 + kit.title() + ", " + stake + " жужиков). </gray><#34D399><click:run_command:'/duel accept'>[Принять]</click></#34D399> "
                 + "<#F87171><click:run_command:'/duel decline'>[Отказаться]</click></#F87171>"));
-        to.playSound(to.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1.2f);
-        getServer().getScheduler().runTaskLater(this, () -> {
-            if (requests.get(to.getUniqueId()) == r) {
-                requests.remove(to.getUniqueId());
-                if (from.isOnline()) say(from, "<gray>" + to.getName() + " не ответил на вызов.");
-            }
-        }, requestMs / 50);
+        on(to, () -> to.playSound(to.getLocation(), Sound.BLOCK_BELL_USE, 1f, 1.2f));
+        later(requestMs / 50, () -> {
+            if (requests.remove(to.getUniqueId(), r) && from.isOnline()) say(from, "<gray>" + to.getName() + " не ответил на вызов.");
+        });
     }
 
     private void accept(Player to) {
@@ -269,7 +271,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             say(to, "<#F87171>У тебя не хватает жужиков.");
             return;
         }
-        int arena = arenas.take();
+        int arena = arenas.reserve();
         if (arena < 0) {
             give(from, r.stake, "возврат ставки");
             give(to, r.stake, "возврат ставки");
@@ -294,10 +296,13 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         }
         duels.put(from.getUniqueId(), d);
         duels.put(to.getUniqueId(), d);
-        prepare(from, d, arenas.spawn(arena, true));
-        prepare(to, d, arenas.spawn(arena, false));
-        countdown(d, 3);
-        timeouts.put(d, getServer().getScheduler().runTaskLater(this, () -> end(d, null, "время вышло", false), fightTicks + 60));
+        // the arena is built by its own region; then each player is prepared and sent there by theirs
+        arenas.build(arena).thenRun(() -> {
+            on(from, () -> prepare(from, d, arenas.spawn(arena, true)));
+            on(to, () -> prepare(to, d, arenas.spawn(arena, false)));
+            later(10, () -> countdown(d, 3));
+            timeouts.put(d, later(fightTicks + 70, () -> end(d, null, "время вышло", false)));
+        });
     }
 
     private void decline(Player to) {
@@ -322,12 +327,12 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         p.setLevel(0);
         p.setExp(0);
         d.kit.give(p);
-        p.teleport(spawn);
+        p.teleportAsync(spawn);
     }
 
     private void countdown(Duel d, int left) {
         if (d.over) return;
-        for (Player p : List.of(d.a, d.b)) {
+        for (Player p : List.of(d.a, d.b)) on(p, () -> {
             if (left > 0) {
                 p.showTitle(Title.title(MM.deserialize("<#FACC15><bold>" + left), MM.deserialize("<gray>" + d.a.getName() + " против " + d.b.getName()),
                         Title.Times.times(Duration.ZERO, Duration.ofMillis(900), Duration.ofMillis(100))));
@@ -337,16 +342,18 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
                         Title.Times.times(Duration.ZERO, Duration.ofMillis(800), Duration.ofMillis(200))));
                 p.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, 0.6f, 1.4f);
             }
-        }
-        if (left > 0) getServer().getScheduler().runTaskLater(this, () -> countdown(d, left - 1), 20L);
+        });
+        if (left > 0) later(20L, () -> countdown(d, left - 1));
         else d.fighting = true;
     }
 
     /** winner null = draw (stakes back). */
     private void end(Duel d, Player winner, String why, boolean now) {
-        if (d.over) return;
-        d.over = true;
-        BukkitTask t = timeouts.remove(d);
+        synchronized (d) {  // both players' regions may end it at the same moment
+            if (d.over) return;
+            d.over = true;
+        }
+        ScheduledTask t = timeouts.remove(d);
         if (t != null) t.cancel();
         int seconds = (int) ((System.currentTimeMillis() - d.started) / 1000);
         long prize = winner == null ? 0 : prize(d.stake);
@@ -366,22 +373,28 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
             for (Player p : List.of(d.a, d.b)) say(p, "<gray>Ничья (" + why + "). Ставки вернулись.");
         } else {
             Player loser = d.other(winner);
-            winner.showTitle(Title.title(MM.deserialize("<#34D399><bold>Победа!"), MM.deserialize("<#FACC15>+" + prize + " жужиков")));
-            winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            on(winner, () -> {
+                winner.showTitle(Title.title(MM.deserialize("<#34D399><bold>Победа!"), MM.deserialize("<#FACC15>+" + prize + " жужиков")));
+                winner.playSound(winner.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            });
             if (loser.isOnline()) loser.showTitle(Title.title(MM.deserialize("<#F87171><bold>Поражение"), MM.deserialize("<gray>" + why)));
             Bukkit.broadcast(MM.deserialize(P + "<white><w></white> <gray>победил</gray> <white><l></white> <gray>(" + d.kit.title()
                             + ") и забрал</gray> <#FACC15>" + prize + " жужиков</#FACC15>",
                     Placeholder.unparsed("w", winner.getName()), Placeholder.unparsed("l", loser.getName())));
         }
-        Runnable back = () -> {
+        if (now) {  // the server is stopping: nothing can be scheduled any more, things come back on the next join
+            for (Player p : List.of(d.a, d.b)) duels.remove(p.getUniqueId());
+            return;
+        }
+        later(60L, () -> {  // 3 s to enjoy the win
             for (Player p : List.of(d.a, d.b)) {
                 duels.remove(p.getUniqueId());
-                if (p.isOnline() && !p.isDead()) restore(p); // offline: on next join; dead: on respawn
+                on(p, () -> {
+                    if (!p.isDead()) restore(p); // offline: on next join; dead: on respawn
+                });
             }
             arenas.free(d.arena);
-        };
-        if (now) back.run();
-        else getServer().getScheduler().runTaskLater(this, back, 60L); // 3 s to enjoy the win
+        });
     }
 
     private void restore(Player p) {
@@ -510,27 +523,26 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        getServer().getScheduler().runTaskLater(this, () -> recordSkin(p), 100L); // SkinsRestorer applies the skin right after join
-        getServer().getScheduler().runTask(this, () -> {
+        p.getScheduler().runDelayed(this, t -> recordSkin(p), null, 100L); // SkinsRestorer applies the skin right after join
+        on(p, () -> {
             if (pending(p).exists()) {
                 restore(p); // left (or the server stopped) in the middle of a duel
                 say(p, "<gray>Дуэль прервалась — вещи и место вернулись.");
             } else if (p.getWorld().equals(arenas.world())) {
-                p.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+                p.teleportAsync(Bukkit.getWorlds().get(0).getSpawnLocation());
             }
         });
         String today = LocalDate.now(zone).toString(), yesterday = LocalDate.now(zone).minusDays(1).toString();
         UUID id = p.getUniqueId();
         String name = p.getName();
-        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+        getServer().getAsyncScheduler().runNow(this, t -> {
             try {
                 Store.Daily d = store.daily(id, name, today, yesterday, dailyBase, dailyStep, dailyMax);
                 if (d == null) return;
                 dirty = true;
-                getServer().getScheduler().runTaskLater(this, () -> {
-                    if (p.isOnline()) say(p, "<#34D399>+" + d.reward() + " жужиков</#34D399> <gray>за вход"
-                            + (d.streak() > 1 ? " — " + d.streak() + " " + days(d.streak()) + " подряд!" : ". Заходи завтра — будет больше."));
-                }, 60L);
+                p.getScheduler().runDelayed(this, x -> say(p, "<#34D399>+" + d.reward() + " жужиков</#34D399> <gray>за вход"
+                        + (d.streak() > 1 ? " — " + d.streak() + " " + days(d.streak()) + " подряд!" : ". Заходи завтра — будет больше.")),
+                        null, 60L);
             } catch (Exception ex) {
                 getLogger().warning("daily reward for " + name + ": " + ex);
             }
@@ -580,7 +592,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     @EventHandler
     public void onRespawn(PlayerRespawnEvent e) {
         Player p = e.getPlayer();
-        if (pending(p).exists()) getServer().getScheduler().runTask(this, () -> restore(p));
+        if (pending(p).exists()) on(p, () -> restore(p));
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -666,7 +678,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
 
     // ------------------------------------------------------------------ skins
 
-    private final Map<UUID, String> knownSkin = new HashMap<>();
+    private final Map<UUID, String> knownSkin = new ConcurrentHashMap<>();
 
     /** The texture in the player's profile — whatever SkinsRestorer (/skin) or Mojang put there. */
     private void recordSkin(Player p) {
@@ -677,7 +689,7 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
         knownSkin.put(p.getUniqueId(), key);
         UUID id = p.getUniqueId();
         String name = p.getName();
-        getServer().getScheduler().runTaskAsynchronously(this, () -> {
+        getServer().getAsyncScheduler().runNow(this, t -> {
             try {
                 store.skin(id, name, texture);
             } catch (Exception e) {
@@ -687,6 +699,16 @@ public final class BeezzDuels extends JavaPlugin implements Listener, TabExecuto
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** Run on the player's own region (Folia), on the main thread elsewhere. Nothing happens if they left. */
+    private void on(Player p, Runnable r) {
+        p.getScheduler().run(this, t -> r.run(), null);
+    }
+
+    /** A delay on the global region: timers that are not about one player. */
+    private ScheduledTask later(long ticks, Runnable r) {
+        return getServer().getGlobalRegionScheduler().runDelayed(this, t -> r.run(), Math.max(1, ticks));
+    }
 
     private File pending(Player p) {
         return new File(pendingDir, p.getUniqueId() + ".yml");

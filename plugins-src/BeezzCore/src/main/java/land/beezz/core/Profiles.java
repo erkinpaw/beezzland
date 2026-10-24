@@ -56,7 +56,7 @@ final class Profiles implements Listener {
 
     void start() {
         // refresh everyone once a minute: new punishments, new hours played, rank changes
-        Bukkit.getScheduler().runTaskTimer(plugin, () -> Bukkit.getOnlinePlayers().forEach(this::refresh), 20L * 60, 20L * 60);
+        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, t -> Bukkit.getOnlinePlayers().forEach(this::refresh), 20L * 60, 20L * 60);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -72,12 +72,10 @@ final class Profiles implements Listener {
 
     private void refresh(Player p) {
         UUID id = p.getUniqueId();
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
             History h = load(id);
             history.put(id, h);
-            Bukkit.getScheduler().runTask(plugin, () -> {
-                if (p.isOnline()) apply(p);
-            });
+            p.getScheduler().run(plugin, x -> apply(p), null);  // back on the player's own region
         });
     }
 

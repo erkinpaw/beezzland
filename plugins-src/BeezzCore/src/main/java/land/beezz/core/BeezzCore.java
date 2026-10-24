@@ -14,7 +14,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitTask;
+import io.papermc.paper.threadedregions.scheduler.ScheduledTask;
 
 import java.time.Duration;
 import java.util.List;
@@ -26,7 +26,7 @@ import java.util.List;
 public final class BeezzCore extends JavaPlugin implements Listener {
 
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private BukkitTask tipsTask;
+    private ScheduledTask tipsTask;
     private int nextTip;
     private Profiles profiles;
     private AfkGuard afk;
@@ -88,7 +88,7 @@ public final class BeezzCore extends JavaPlugin implements Listener {
             return;
         }
         // let the client finish loading the world before the title shows
-        Bukkit.getScheduler().runTaskLater(this, () -> {
+        p.getScheduler().runDelayed(this, t -> {
             if (!p.isOnline()) return;
             p.showTitle(Title.title(text(getConfig().getString("welcome.title", ""), p),
                     text(getConfig().getString("welcome.subtitle", ""), p),
@@ -100,7 +100,7 @@ public final class BeezzCore extends JavaPlugin implements Listener {
                     if (other != p) other.sendMessage(text(all, p));
                 }
             }
-        }, 40L);
+        }, null, 40L);
     }
 
     private void startTips() {
@@ -109,11 +109,12 @@ public final class BeezzCore extends JavaPlugin implements Listener {
         List<String> tips = getConfig().getStringList("tips.messages");
         if (minutes <= 0 || tips.isEmpty()) return;
         long ticks = minutes * 60 * 20;
-        tipsTask = Bukkit.getScheduler().runTaskTimer(this, () -> {
+        tipsTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(this, t -> {
             if (Bukkit.getOnlinePlayers().isEmpty()) return;
             List<String> list = getConfig().getStringList("tips.messages");
             String line = getConfig().getString("tips.prefix", "") + list.get(nextTip++ % list.size());
-            for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(text(line, p));
+            // placeholders read the player: on Folia only the player's own region may do that
+            for (Player p : Bukkit.getOnlinePlayers()) p.getScheduler().run(this, x -> p.sendMessage(text(line, p)), null);
         }, ticks, ticks);
     }
 
@@ -137,7 +138,7 @@ public final class BeezzCore extends JavaPlugin implements Listener {
                 }
                 reloadConfig();
                 startTips();
-                Bukkit.getOnlinePlayers().forEach(profiles::apply);
+                Bukkit.getOnlinePlayers().forEach(o -> o.getScheduler().run(this, t -> profiles.apply(o), null));
                 sender.sendMessage(MM.deserialize("<#FACC15>BeezzCore:</#FACC15> <gray>config.yml перечитан."));
             }
             default -> { return false; }

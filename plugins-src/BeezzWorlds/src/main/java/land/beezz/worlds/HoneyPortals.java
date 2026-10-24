@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -41,6 +43,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * flint and steel. The inside stays air and is drawn with honey particles instead of the
  * purple nether swirl. Portals link 1:1 by coordinates; if the other side has no portal
  * nearby, one is built there.
+ * <p>
+ * Thread-safe for Folia: events come from many region threads at once, so the portal list is
+ * copy-on-write, saving is synchronized, and anything touching blocks of another place
+ * (building the far side, particles) is handed to the region that owns those blocks.
  */
 final class HoneyPortals implements Listener {
 
@@ -53,9 +59,9 @@ final class HoneyPortals implements Listener {
     private final JavaPlugin plugin;
     private final Worlds worlds;
     private final File file;
-    private final List<HoneyPortal> portals = new ArrayList<>();
+    private final List<HoneyPortal> portals = new CopyOnWriteArrayList<>();
     /** Players standing in a portal right now; they must step out before it can fire again. */
-    private final Set<UUID> inside = new HashSet<>();
+    private final Set<UUID> inside = ConcurrentHashMap.newKeySet();
 
     HoneyPortals(JavaPlugin plugin, Worlds worlds) {
         this.plugin = plugin;
@@ -74,7 +80,7 @@ final class HoneyPortals implements Listener {
         }
     }
 
-    private void save() {
+    private synchronized void save() {
         YamlConfiguration yml = new YamlConfiguration();
         List<Map<String, Object>> list = new ArrayList<>();
         for (HoneyPortal p : portals) {
@@ -240,18 +246,29 @@ final class HoneyPortals implements Listener {
         World here = Bukkit.getWorld(from.world());
         World there = worlds.isFarm(here) ? worlds.main() : worlds.farm();
         Location src = from.arrival(here);
-        HoneyPortal target = nearest(there, src.getX(), src.getZ());
-        if (target == null) {
-            target = build(there, src.getBlockX(), src.getBlockZ(), from.alongX());
-        }
-        Location dest = target.arrival(there);
         here.playSound(src, Sound.BLOCK_HONEY_BLOCK_SLIDE, 1f, 0.7f);
         burst(from, here, 40);
+        HoneyPortal known = nearest(there, src.getX(), src.getZ());
+        if (known != null) {
+            go(p, known, there);
+            return;
+        }
+        // the far side has to be built first: load its chunk, then build in the region that owns it
+        int x = src.getBlockX(), z = src.getBlockZ();
+        there.getChunkAtAsync(x >> 4, z >> 4).thenRun(() -> Bukkit.getRegionScheduler().run(plugin, there, x >> 4, z >> 4,
+                t -> go(p, build(there, x, z, from.alongX()), there)));
+    }
+
+    private void go(Player p, HoneyPortal target, World there) {
+        Location dest = target.arrival(there);
         HoneyPortal arrived = target;
         p.teleportAsync(dest, TeleportCause.PLUGIN).thenAccept(ok -> {
             if (ok) {
-                there.playSound(dest, Sound.BLOCK_BEEHIVE_EXIT, 1f, 1f);
-                burst(arrived, there, 40);
+                // Folia: the callback may run on another thread — effects go back to the player's region
+                p.getScheduler().run(plugin, t -> {
+                    there.playSound(dest, Sound.BLOCK_BEEHIVE_EXIT, 1f, 1f);
+                    burst(arrived, there, 40);
+                }, null);
                 Msg.actionBar(p, worlds.isFarm(there)
                         ? Msg.HONEY + "Мир ферм</#FACC15> <gray>— строй фермы и механизмы"
                         : Msg.SKY + "Основной мир</#93C5FD>");
@@ -305,26 +322,33 @@ final class HoneyPortals implements Listener {
 
     /** Called every few ticks: honey shimmer inside every portal that has a player nearby. */
     void tickParticles() {
-        ThreadLocalRandom r = ThreadLocalRandom.current();
         for (HoneyPortal p : portals) {
             World w = Bukkit.getWorld(p.world());
             if (w == null) continue;
             Location c = p.arrival(w).add(0, (p.maxY() - p.minY()) / 2.0, 0);
-            if (!w.isChunkLoaded(c.getBlockX() >> 4, c.getBlockZ() >> 4)
-                    || w.getNearbyPlayers(c, 32).isEmpty()) {
+            if (!w.isChunkLoaded(c.getBlockX() >> 4, c.getBlockZ() >> 4)) {
                 continue;
             }
-            int area = (p.maxA() - p.minA() + 1) * (p.maxY() - p.minY() + 1);
-            for (int i = 0; i < area * 2; i++) {
-                Location at = randomInside(p, w, r);
-                w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, r.nextBoolean() ? HONEY_DUST : AMBER_DUST);
-            }
-            if (r.nextInt(3) == 0) {
-                w.spawnParticle(Particle.FALLING_HONEY, randomInside(p, w, r), 1);
-            }
-            if (r.nextInt(4) == 0) {
-                w.spawnParticle(Particle.WAX_ON, randomInside(p, w, r), 1, 0.1, 0.1, 0.1, 0);
-            }
+            // nearby players and particles belong to the region that owns the portal
+            Bukkit.getRegionScheduler().execute(plugin, c, () -> shimmer(p, w, c));
+        }
+    }
+
+    private void shimmer(HoneyPortal p, World w, Location c) {
+        if (w.getNearbyPlayers(c, 32).isEmpty()) {
+            return;
+        }
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        int area = (p.maxA() - p.minA() + 1) * (p.maxY() - p.minY() + 1);
+        for (int i = 0; i < area * 2; i++) {
+            Location at = randomInside(p, w, r);
+            w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, r.nextBoolean() ? HONEY_DUST : AMBER_DUST);
+        }
+        if (r.nextInt(3) == 0) {
+            w.spawnParticle(Particle.FALLING_HONEY, randomInside(p, w, r), 1);
+        }
+        if (r.nextInt(4) == 0) {
+            w.spawnParticle(Particle.WAX_ON, randomInside(p, w, r), 1, 0.1, 0.1, 0.1, 0);
         }
     }
 
