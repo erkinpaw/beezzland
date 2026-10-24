@@ -43,6 +43,7 @@ donate:
         - "<gray>значок в чате и TAB"
         - "<gray>AFK до 4 часов без кика"
         - "<gray>3 свои пластинки за сезон"
+        - "<gray>кто трогал блок или сундук (/co i)"
     gold:
       title: Gold
       color: "#FCD34D"

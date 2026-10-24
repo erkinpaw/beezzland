@@ -36,7 +36,15 @@ lp group moder permission set libertybans.mute.* true
 lp group moder permission set libertybans.warn.* true
 lp group moder permission set libertybans.kick.* true
 lp group moder permission set libertybans.list.* true
-lp group moder permission set coreprotect.* true
+# CoreProtect (block log; waits for a 26.3 build): donors and helpers look who did what, moders roll back,
+# admins everything (purge, reload). Inspect = click a block / chest with /co i; lookup = /co l by player or area
+lp group helper permission set coreprotect.inspect true
+lp group helper permission set coreprotect.lookup true
+lp group moder permission set coreprotect.rollback true
+lp group moder permission set coreprotect.restore true
+lp group moder permission set coreprotect.teleport true
+lp group moder permission set coreprotect.help true
+lp group admin permission set coreprotect.* true
 lp group helper permission set libertybans.commands true
 lp group helper permission set libertybans.mute.do.target.uuid true
 lp group helper permission set libertybans.mute.do.time.duration.1h true
@@ -73,6 +81,8 @@ lp group default meta set rank-title "Игрок"
 lp group default meta set afk-hours 2
 lp group default meta set discs 0
 lp group default permission set pv.addon.discs.play true
+# donors see who placed / broke a block or took from a chest (CoreProtect inspector, /co i) — no rollback
+lp group silver permission set coreprotect.inspect true
 lp group silver permission set pv.addon.discs.burn true
 lp group silver permission set pv.addon.discs.erase true
 lp group silver permission set pv.addon.discs.search true
