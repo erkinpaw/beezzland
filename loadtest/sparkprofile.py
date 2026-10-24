@@ -142,3 +142,26 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def callers(path, needle, depth=6, top=12):
+    """Who spends time in methods matching `needle`: the call chains above them, heaviest first."""
+    data = open(path, "rb").read()
+    threads = [thread(v) for num, wt, v in fields(data) if num == 2]
+    th = next(t for t in threads if t["name"].startswith("Server thread"))
+    nodes, total = th["nodes"], sum(th["times"])
+    chains = defaultdict(float)
+    sys.setrecursionlimit(100000)
+
+    def walk(i, stack):
+        n = nodes[i]
+        name = f"{n['cls'].split('.')[-1]}.{n['meth']}"
+        if needle in name:
+            chains[" < ".join(reversed(stack[-depth:]))] += n["t"]
+            return
+        for c in n["refs"]:
+            walk(c, stack + [name])
+    for r in th["refs"]:
+        walk(r, [])
+    for chain, t in sorted(chains.items(), key=lambda x: -x[1])[:top]:
+        print(f"{t / total * 100:5.1f}%  {chain}")

@@ -122,12 +122,30 @@ MAIN_SPIGOT = ("  world:" + NL + "    entity-activation-range:" + NL + "      an
                + "      villagers: 16" + NL + "      misc: 8" + NL + "      water: 8" + NL)
 
 
+# Natural mob spawning was ~32% of the main thread with 60 players (spark, load test): every tick the server
+# tries every chunk within mob-spawn-range of each player. 4 chunks (64 blocks) instead of the default 8
+# (limited by simulation-distance 6) cuts those chunks by more than half; mobs still spawn 24+ blocks away
+# and the mob cap is the same, so there are as many mobs around a player, just closer.
+# The main nether tries monsters every 5 ticks instead of every tick.
+NETHER_PAPER = """# BeezzLand: the main nether (scripts/configure.py writes this file)
+_version: 31
+entities:
+  spawning:
+    ticks-per-spawn:
+      monster: 5
+"""
+
+
 def main_world():
     d = os.path.join(SURV, "world", "dimensions", "minecraft", "overworld")
     os.makedirs(d, exist_ok=True)
     write(os.path.join(d, "paper-world.yml"), MAIN_PAPER)
+    d = os.path.join(SURV, "world", "dimensions", "minecraft", "the_nether")
+    os.makedirs(d, exist_ok=True)
+    write(os.path.join(d, "paper-world.yml"), NETHER_PAPER)
     p = os.path.join(SURV, "spigot.yml")
     t = read(p)
+    t = yaml_set(t, ["world-settings", "default", "mob-spawn-range"], "4")
     t = re.sub(rf"(?m)^  world:{NL}(    .*{NL})*", "", t)
     t = t.replace("world-settings:" + NL, "world-settings:" + NL + MAIN_SPIGOT, 1)
     write(p, t)
