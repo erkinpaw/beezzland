@@ -22,3 +22,23 @@ Heap 3584M unless noted; "g1" = plain `-XX:+UseG1GC`, "aikar" = flags from `syst
 | map-*.jpg | the same spot rendered by Pl3xMap (vintage_story) and squaremap |
 
 Run 10 lacks the first ~80 s (joining) because its monitor started late.
+
+## 24.10.2026: all worlds, working farms (`w*`)
+
+60 bots by role over the main world, nether, farm world and farm nether (`world_bots.js`), test farms built by
+`farms.py` (iron, wool, spawner). 15 min at night after all bots joined. Heap 6 GB unless noted, view 8 / sim 6
+unless noted. Each variant adds to the one before. Columns now also have `cpu_cores, rss_mb` (`monitor.py`).
+`*.farms.json` — what the farm chests got during the run; `*.entities.txt` — `paper entity list` per world at the end
+(main world, nether, farm world, farm nether).
+
+| Run | Note |
+|---|---|
+| w1 | baseline, heap 3584M: out of memory after ~6 min of full load |
+| w2 | baseline, 6 GB |
+| w3 | + farm world: monster cap 100, spawner mobs and villager golems without AI |
+| w4 | + main world: fewer mobs, shorter entity activation range |
+| w5 | + mob-spawn-range 4, main nether monsters every 5 ticks — best |
+| w6 / w7 | w5 with view/sim 10/6 and 12/8 |
+| w8 | w5 + `locator_bar false` |
+
+spark profiles of w4 and w5 were read with `sparkprofile.py` (not kept: 2 MB each).

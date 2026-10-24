@@ -1,0 +1,49 @@
+§cCould not load world for world. Please select a valid world.
+§cUsage: /paper entity list [filter] [world]
+
+§cCould not load world for world_nether. Please select a valid world.
+§cUsage: /paper entity list [filter] [world]
+
+Total Ticking: 242, Total Non-Ticking: 242
+  0 (45) : minecraft:falling_block
+  10 (28) : minecraft:cow
+  15 (23) : minecraft:rabbit
+  23 (10) : minecraft:sheep
+  0 (32) : minecraft:chicken
+  28 (3) : minecraft:creeper
+  11 (18) : minecraft:pig
+  27 (1) : minecraft:zombie
+  22 (2) : minecraft:skeleton
+  13 (10) : minecraft:enderman
+  15 (6) : minecraft:polar_bear
+  1 (19) : minecraft:fox
+  10 (9) : minecraft:chest_minecart
+  11 (8) : minecraft:item
+  1 (17) : minecraft:wolf
+  15 (1) : minecraft:bat
+  16 (0) : minecraft:hopper_minecart
+  10 (0) : minecraft:spider
+  6 (4) : minecraft:villager
+  2 (2) : minecraft:bee
+  3 (0) : minecraft:cushion
+  3 (0) : minecraft:iron_golem
+  0 (2) : minecraft:drowned
+  0 (2) : minecraft:turtle
+* First number is ticking entities, second number is non-ticking entities
+
+Total Ticking: 452, Total Non-Ticking: 80
+  231 (8) : minecraft:zombified_piglin
+  57 (42) : minecraft:strider
+  59 (20) : minecraft:piglin
+  56 (2) : minecraft:magma_cube
+  26 (2) : minecraft:enderman
+  6 (2) : minecraft:piglin_brute
+  5 (2) : minecraft:ghast
+  5 (0) : minecraft:skeleton
+  2 (2) : minecraft:item
+  2 (0) : minecraft:hoglin
+  1 (0) : minecraft:blaze
+  1 (0) : minecraft:chicken
+  1 (0) : minecraft:wither_skeleton
+* First number is ticking entities, second number is non-ticking entities
+

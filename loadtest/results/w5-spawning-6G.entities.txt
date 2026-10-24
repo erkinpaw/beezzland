@@ -1,0 +1,104 @@
+Total Ticking: 1865, Total Non-Ticking: 4908
+  231 (1059) : minecraft:item
+  174 (712) : minecraft:chicken
+  222 (614) : minecraft:sheep
+  153 (655) : minecraft:pig
+  131 (504) : minecraft:cow
+  97 (299) : minecraft:chest_minecart
+  0 (340) : minecraft:falling_block
+  28 (149) : minecraft:wolf
+  139 (10) : minecraft:creeper
+  118 (11) : minecraft:skeleton
+  113 (10) : minecraft:zombie
+  105 (9) : minecraft:bat
+  34 (79) : minecraft:enderman
+  26 (84) : minecraft:turtle
+  90 (8) : minecraft:squid
+  7 (90) : minecraft:horse
+  62 (0) : minecraft:glow_squid
+  0 (54) : minecraft:bee
+  5 (40) : minecraft:armadillo
+  8 (37) : minecraft:drowned
+  10 (35) : minecraft:villager
+  12 (21) : minecraft:rabbit
+  8 (21) : minecraft:fox
+  25 (3) : minecraft:spider
+  5 (14) : minecraft:frog
+  0 (19) : minecraft:polar_bear
+  4 (13) : minecraft:cushion
+  13 (0) : minecraft:nautilus
+  10 (0) : minecraft:axolotl
+  0 (8) : minecraft:cat
+  8 (0) : minecraft:hopper_minecart
+  7 (0) : minecraft:salmon
+  2 (4) : minecraft:donkey
+  5 (0) : minecraft:cod
+  4 (1) : minecraft:witch
+  5 (0) : minecraft:zombie_villager
+  2 (2) : minecraft:iron_golem
+  0 (2) : minecraft:zombie_nautilus
+  0 (1) : minecraft:arrow
+  1 (0) : minecraft:cave_spider
+  1 (0) : minecraft:dolphin
+* First number is ticking entities, second number is non-ticking entities
+
+Total Ticking: 545, Total Non-Ticking: 240
+  117 (85) : minecraft:piglin
+  163 (29) : minecraft:zombified_piglin
+  68 (38) : minecraft:strider
+  80 (12) : minecraft:enderman
+  29 (40) : minecraft:hoglin
+  55 (11) : minecraft:magma_cube
+  5 (6) : minecraft:arrow
+  6 (4) : minecraft:item
+  4 (5) : minecraft:ghast
+  9 (0) : minecraft:piglin_brute
+  4 (3) : minecraft:wither_skeleton
+  2 (4) : minecraft:skeleton
+  2 (3) : minecraft:blaze
+  1 (0) : minecraft:chicken
+* First number is ticking entities, second number is non-ticking entities
+
+Total Ticking: 210, Total Non-Ticking: 261
+  0 (45) : minecraft:falling_block
+  10 (28) : minecraft:cow
+  15 (23) : minecraft:rabbit
+  11 (24) : minecraft:enderman
+  23 (10) : minecraft:sheep
+  0 (32) : minecraft:chicken
+  10 (19) : minecraft:pig
+  22 (5) : minecraft:creeper
+  23 (3) : minecraft:zombie
+  15 (6) : minecraft:polar_bear
+  1 (19) : minecraft:fox
+  10 (9) : minecraft:chest_minecart
+  17 (2) : minecraft:skeleton
+  1 (17) : minecraft:wolf
+  16 (0) : minecraft:hopper_minecart
+  14 (1) : minecraft:bat
+  8 (6) : minecraft:item
+  6 (4) : minecraft:villager
+  4 (1) : minecraft:spider
+  0 (3) : minecraft:bee
+  3 (0) : minecraft:cushion
+  0 (2) : minecraft:drowned
+  0 (2) : minecraft:turtle
+  1 (0) : minecraft:iron_golem
+* First number is ticking entities, second number is non-ticking entities
+
+Total Ticking: 458, Total Non-Ticking: 105
+  230 (24) : minecraft:zombified_piglin
+  58 (42) : minecraft:strider
+  88 (4) : minecraft:magma_cube
+  35 (27) : minecraft:piglin
+  27 (1) : minecraft:enderman
+  7 (1) : minecraft:piglin_brute
+  5 (0) : minecraft:hoglin
+  0 (4) : minecraft:ghast
+  2 (2) : minecraft:item
+  2 (0) : minecraft:blaze
+  2 (0) : minecraft:skeleton
+  1 (0) : minecraft:chicken
+  1 (0) : minecraft:wither_skeleton
+* First number is ticking entities, second number is non-ticking entities
+
