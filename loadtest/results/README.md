@@ -42,3 +42,5 @@ unless noted. Each variant adds to the one before. Columns now also have `cpu_co
 | w8 | w5 + `locator_bar false` |
 
 spark profiles of w4 and w5 were read with `sparkprofile.py` (not kept: 2 MB each).
+| w9–w11 | w5 + locator off + the small extras; same config three times without restoring the world: 68–74 ms (the world gets heavier) |
+| w12–w15 | from one world snapshot: extras off / on / off / on = 72.0 / 70.8 / 70.8 / 72.1 ms — no measurable difference |

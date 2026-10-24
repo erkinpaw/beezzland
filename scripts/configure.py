@@ -167,11 +167,12 @@ def farm_world():
 
 
 def extras():
-    """Small things players hardly notice, each a few % of the tick at most (load test, PLAN.md):
+    """Small things players hardly notice. In the 60-bot test they changed nothing measurable (70.8–72.1 ms
+    with or without, PLAN.md); they are kept as insurance against spikes the test doesn't have: TNT,
+    piles of dropped items, arrow-heavy fights, dolphins. Alternate Current redstone and fewer entity
+    collisions were tried too and dropped: no gain here, and they can change how farms behave.
     - explosions: Paper's faster calculation, same result;
-    - redstone: Alternate Current — same circuits, far fewer block updates (farms with clocks);
     - mobs don't re-plan their path on every nearby block change (they do when the path breaks);
-    - an entity checks collisions with at most 2 others per tick instead of 8 (mob crowds, farms);
     - armor stands and markers don't tick (no gravity for armor stands — they stay where placed);
     - items merge from 2.5 blocks, XP orbs from 3: fewer item entities;
     - dropped cobblestone / netherrack despawn after 15 s, eggs after 1 min (thousands of eggs lie
@@ -183,9 +184,7 @@ def extras():
     t = read(p)
     for path, value in [
         (["environment", "optimize-explosions"], "true"),
-        (["misc", "redstone-implementation"], "ALTERNATE_CURRENT"),
         (["misc", "update-pathfinding-on-block-update"], "false"),
-        (["collisions", "max-entity-collisions"], "2"),
         (["entities", "armor-stands", "tick"], "false"),
         (["entities", "armor-stands", "do-collision-entity-lookups"], "false"),
         (["entities", "markers", "tick"], "false"),
