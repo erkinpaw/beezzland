@@ -166,6 +166,48 @@ def farm_world():
     write(p, t)
 
 
+def extras():
+    """Small things players hardly notice, each a few % of the tick at most (load test, PLAN.md):
+    - explosions: Paper's faster calculation, same result;
+    - redstone: Alternate Current — same circuits, far fewer block updates (farms with clocks);
+    - mobs don't re-plan their path on every nearby block change (they do when the path breaks);
+    - an entity checks collisions with at most 2 others per tick instead of 8 (mob crowds, farms);
+    - armor stands and markers don't tick (no gravity for armor stands — they stay where placed);
+    - items merge from 2.5 blocks, XP orbs from 3: fewer item entities;
+    - dropped cobblestone / netherrack despawn after 15 s, eggs after 1 min (thousands of eggs lie
+      in chunks no one visits: chickens lay them all the time);
+    - arrows shot by skeletons and by players in creative vanish after 3 s;
+    - villagers re-check their bed / job block every 3 s instead of every tick;
+    - dolphins don't search for treasure (a structure search, a known lag spike)."""
+    p = os.path.join(SURV, "config", "paper-world-defaults.yml")
+    t = read(p)
+    for path, value in [
+        (["environment", "optimize-explosions"], "true"),
+        (["misc", "redstone-implementation"], "ALTERNATE_CURRENT"),
+        (["misc", "update-pathfinding-on-block-update"], "false"),
+        (["collisions", "max-entity-collisions"], "2"),
+        (["entities", "armor-stands", "tick"], "false"),
+        (["entities", "armor-stands", "do-collision-entity-lookups"], "false"),
+        (["entities", "markers", "tick"], "false"),
+        (["entities", "spawning", "alt-item-despawn-rate", "enabled"], "true"),
+        (["entities", "spawning", "non-player-arrow-despawn-rate"], "60"),
+        (["entities", "spawning", "creative-arrow-despawn-rate"], "60"),
+        (["tick-rates", "behavior", "villager", "validatenearbypoi"], "60"),
+    ]:
+        t = yaml_set(t, path, value)
+    if "        egg:" not in t:
+        t = t.replace("        cobblestone: 300" + NL, "        cobblestone: 300" + NL + "        netherrack: 300" + NL
+                      + "        egg: 1200" + NL, 1)
+    write(p, t)
+    p = os.path.join(SURV, "spigot.yml")
+    t = read(p)
+    t = yaml_set(t, ["world-settings", "default", "merge-radius", "item"], "2.5")
+    t = yaml_set(t, ["world-settings", "default", "merge-radius", "exp"], "3.0")
+    write(p, t)
+    p = os.path.join(SURV, "purpur.yml")
+    write(p, yaml_set(read(p), ["world-settings", "default", "mobs", "dolphin", "disable-treasure-searching"], "true"))
+
+
 def main():
     online = S["online_mode"]
     secret = read(os.path.join(PROXY, "forwarding.secret")).strip()
@@ -210,6 +252,7 @@ def main():
     # Paper's built-in anti-xray: ores fully hidden inside stone are sent to clients as stone
     p = os.path.join(SURV, "config", "paper-world-defaults.yml")
     write(p, yaml_set(read(p), ["anticheat", "anti-xray", "enabled"], "true"))
+    extras()
 
     # --- Farm world: more mobs, spawner mobs without AI (see farm_world()) ---
     farm_world()

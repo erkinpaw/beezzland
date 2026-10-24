@@ -48,6 +48,8 @@ lp group default permission set carbon.channel.local.speak true
 lp group default permission set carbon.channel.global.see true
 lp group default permission set carbon.channel.global.speak true
 gamerule players_sleeping_percentage 50
+# the locator bar (directions to other players) is not needed on BeezzLand; it costs main-thread time (load test)
+gamerule locator_bar false
 # donor ranks (cosmetic only, per season): badge, nick colour, AFK time, own music discs
 lp creategroup silver
 lp creategroup gold
